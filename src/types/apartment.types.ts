@@ -1,46 +1,43 @@
 export type ApartmentStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export interface ApartmentPublicItem {
-  id: string;
+  id: number;
   name: string;
   address: string;
 }
 
 export interface ApartmentPublicDetail {
-  id: string;
+  id: number;
   name: string;
   address: string;
-  startComplexNumber: string | null;
-  endComplexNumber: string | null;
-  startDongNumber: string | null;
-  endDongNumber: string | null;
-  startFloorNumber: string | null;
-  endFloorNumber: string | null;
-  startHoNumber: string | null;
-  endHoNumber: string | null;
+  startComplexNumber: string;
+  endComplexNumber: string;
+  startDongNumber: string;
+  endDongNumber: string;
+  startFloorNumber: string;
+  endFloorNumber: string;
+  startHoNumber: string;
+  endHoNumber: string;
   dongRange: { start: string; end: string };
   hoRange: { start: string; end: string };
 }
 
 export interface ApartmentAdminItem {
-  id: string;
+  id: number;
   name: string;
   address: string;
-  officeNumber: string | null;
-  description: string | null;
-  startComplexNumber: string | null;
-  endComplexNumber: string | null;
-  startDongNumber: string | null;
-  endDongNumber: string | null;
-  startFloorNumber: string | null;
-  endFloorNumber: string | null;
-  startHoNumber: string | null;
-  endHoNumber: string | null;
+  officeNumber: string;
+  description: string;
+  startComplexNumber: string;
+  endComplexNumber: string;
+  startDongNumber: string;
+  endDongNumber: string;
+  startFloorNumber: string;
+  endFloorNumber: string;
+  startHoNumber: string;
+  endHoNumber: string;
   apartmentStatus: ApartmentStatus;
-  adminId: string | null;
-  adminName: string | null;
-  adminContact: string | null;
-  adminEmail: string | null;
+  adminId: number;
 }
 
 export interface ApartmentListPublicResponse {

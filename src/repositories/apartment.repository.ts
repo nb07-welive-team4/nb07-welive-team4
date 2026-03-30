@@ -20,7 +20,7 @@ export const findApartmentsPublic = async (filters: ApartmentPublicQuery) => {
   });
 };
 
-export const findApartmentPublicById = async (id: string) => {
+export const findApartmentPublicById = async (id: number) => {
   return prisma.apartment.findUnique({
     where: { id, apartmentStatus: "APPROVED" },
     select: {
@@ -51,8 +51,6 @@ export const findApartments = async (
       OR: [
         { name: { contains: searchKeyword, mode: "insensitive" as const } },
         { address: { contains: searchKeyword, mode: "insensitive" as const } },
-        { adminName: { contains: searchKeyword, mode: "insensitive" as const } },
-        { adminEmail: { contains: searchKeyword, mode: "insensitive" as const } },
       ],
     }),
   };
@@ -65,6 +63,6 @@ export const findApartments = async (
   return { apartments, totalCount };
 };
 
-export const findApartmentById = async (id: string) => {
+export const findApartmentById = async (id: number) => {
   return prisma.apartment.findUnique({ where: { id } });
 };

@@ -1,11 +1,12 @@
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 import * as apartmentService from "../services/apartment.service";
 import {
   validateApartmentPublicQuery,
   validateApartmentAdminQuery,
 } from "../structs/apartment.struct";
+import { BadRequestError } from "../errors/AppError";
 
-//아파트 목록 조회
+// [공개용] 아파트 목록 조회
 export const getApartmentsPublic = async (
   req: Request,
   res: Response,
@@ -20,14 +21,15 @@ export const getApartmentsPublic = async (
   }
 };
 
-//아파트 상세 조회
+// [공개용] 아파트 상세 조회
 export const getApartmentPublicById = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const id = req.params["id"] as string;
+    const id = Number(req.params["id"]);
+    if (isNaN(id)) throw new BadRequestError("유효한 id를 입력해주세요.");
     const result = await apartmentService.getApartmentPublicById(id);
     res.status(200).json(result);
   } catch (err) {
@@ -35,7 +37,7 @@ export const getApartmentPublicById = async (
   }
 };
 
-// 관리자용 아파트 목록 조회
+// [슈퍼관리자/관리자] 아파트 목록 조회
 export const getApartments = async (
   req: Request,
   res: Response,
@@ -50,14 +52,15 @@ export const getApartments = async (
   }
 };
 
-//관리자용 아파트 상세 조회
+// [슈퍼관리자/관리자] 아파트 상세 조회
 export const getApartmentById = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const id = req.params["id"] as string;
+    const id = Number(req.params["id"]);
+    if (isNaN(id)) throw new BadRequestError("유효한 id를 입력해주세요.");
     const result = await apartmentService.getApartmentById(id);
     res.status(200).json(result);
   } catch (err) {
