@@ -55,7 +55,11 @@ const deleteComment = async (
   next: NextFunction,
 ) => {
   try {
+<<<<<<< HEAD
     const commentId = req.params["commentId"] as string;
+=======
+    const { commentId } = req.params;
+>>>>>>> 05aa83d (feat: Comment CRUD API 구현)
     const requestUserId = req.user.id;
     const requestUserRole = req.user.role;
 
