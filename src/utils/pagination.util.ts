@@ -11,13 +11,13 @@ export interface PaginationMeta {
 }
 
 export const parsePagination = (
-  page: string | undefined,
-  limit: string | undefined,
+  page: number | string | undefined,
+  limit: number | string | undefined,
   defaultLimit = 10
 ): PaginationOptions => {
   return {
-    page: Math.max(1, parseInt(page ?? "1", 10)),
-    limit: Math.max(1, parseInt(limit ?? String(defaultLimit), 10)),
+    page: Math.max(1, parseInt(String(page ?? "1"), 10)),
+    limit: Math.max(1, parseInt(String(limit ?? defaultLimit), 10)),
   };
 };
 

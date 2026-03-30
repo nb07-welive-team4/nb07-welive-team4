@@ -64,6 +64,6 @@ export interface ApartmentAdminQuery {
   address?: string;
   searchKeyword?: string;
   apartmentStatus?: ApartmentStatus;
-  page?: string;
-  limit?: string;
+  page?: number;
+  limit?: number;
 }

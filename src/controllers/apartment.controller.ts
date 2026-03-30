@@ -5,7 +5,7 @@ import {
   validateApartmentAdminQuery,
 } from "../structs/apartment.struct";
 
-// [공개용] 아파트 목록 조회
+//아파트 목록 조회
 export const getApartmentsPublic = async (
   req: Request,
   res: Response,
@@ -20,14 +20,14 @@ export const getApartmentsPublic = async (
   }
 };
 
-// [공개용] 아파트 상세 조회
+//아파트 상세 조회
 export const getApartmentPublicById = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params["id"] as string;
     const result = await apartmentService.getApartmentPublicById(id);
     res.status(200).json(result);
   } catch (err) {
@@ -35,7 +35,7 @@ export const getApartmentPublicById = async (
   }
 };
 
-// [슈퍼관리자/관리자] 아파트 목록 조회
+// 관리자용 아파트 목록 조회
 export const getApartments = async (
   req: Request,
   res: Response,
@@ -50,14 +50,14 @@ export const getApartments = async (
   }
 };
 
-// [슈퍼관리자/관리자] 아파트 상세 조회
+//관리자용 아파트 상세 조회
 export const getApartmentById = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params["id"] as string;
     const result = await apartmentService.getApartmentById(id);
     res.status(200).json(result);
   } catch (err) {
