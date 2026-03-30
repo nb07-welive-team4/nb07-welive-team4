@@ -6,8 +6,10 @@
 
     // Environment Settings
     "module": "commonjs",
-    "moduleResolution": "bundler",
-    "target": "es2020",
+    "moduleResolution": "node",
+    "target": "esnext",
+    "types": [],
+    "ignoreDeprecations": "6.0",
 
     // Other Outputs
     "sourceMap": true,
