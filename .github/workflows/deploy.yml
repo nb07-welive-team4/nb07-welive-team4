@@ -1,0 +1,67 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-northeast-2
+  AWS_ACCOUNT_ID: "022038146145"
+  IMAGE_URI: 022038146145.dkr.ecr.ap-northeast-2.amazonaws.com/nb07-welive-team4:latest
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::022038146145:role/github-actions-ecr-push-role
+          aws-region: ap-northeast-2
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image
+        run: docker build -t $IMAGE_URI .
+
+      - name: Push Docker image
+        run: docker push $IMAGE_URI
+
+      - name: Write SSH private key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_PRIVATE_KEY" || { echo "SSH_PRIVATE_KEY secret is missing"; exit 1; }
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Add host to known_hosts
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_HOST" || { echo "SSH_HOST secret is missing"; exit 1; }
+          ssh-keyscan -T 30 -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          nc -vz "$SSH_HOST" 22
+
+      - name: Deploy on EC2
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_USER" || { echo "SSH_USER secret is missing"; exit 1; }
+          test -n "$SSH_HOST" || { echo "SSH_HOST secret is missing"; exit 1; }
+          ssh -i ~/.ssh/id_rsa "$SSH_USER@$SSH_HOST" 'bash ~/deploy/nb07-welive-team4/deploy.sh'
