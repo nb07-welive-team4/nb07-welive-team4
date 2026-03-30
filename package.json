@@ -1,13 +1,30 @@
 {
+  "name": "nb07-welive-team4",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dlckdgh0523-lgtm/nb07-welive-team4.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/dlckdgh0523-lgtm/nb07-welive-team4/issues"
+  },
+  "homepage": "https://github.com/dlckdgh0523-lgtm/nb07-welive-team4#readme",
   "dependencies": {
-    "dotenv": "^17.3.1",
+    "cors": "^2.8.6",
     "express": "^5.2.1"
   },
   "devDependencies": {
-    "@prisma/client": "^7.5.0",
-    "@types/express": "^5.0.6",
-    "prisma": "^7.5.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^6.0.2"
+    "nodemon": "^3.1.14"
   }
 }
