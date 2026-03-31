@@ -1,5 +1,5 @@
 import { PrismaClient } from "../generated/prisma";
-import { CreateCommentBody, UpdateCommentBody } from "../types/comment-types";
+import { CreateCommentBody, UpdateCommentBody } from "../types/comment-types.js";
 
 const prisma = new PrismaClient();
 
