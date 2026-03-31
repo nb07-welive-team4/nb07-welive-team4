@@ -48,6 +48,12 @@ export const LoginStruct = object({
   password: size(string(), 8, 20),
 });
 
+export const UserId = object({
+  user: object({
+    id: string(),
+  }),
+});
+
 export type createUser = Infer<typeof UserStruct>;
 export type createAdmin = Infer<typeof AdminStruct>;
 export type createSuperAdmin = Infer<typeof SuperAdminStruct>;

@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import prisma from "../../prisma/prisma";
+import prisma from "../lib/prisma";
 import { CreateApartDto } from "../types/apart.type";
 
 export class ApartRepo {
