@@ -4,34 +4,31 @@
   "description": "",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "ts-node src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "ts-node src/server.ts",
+    "start": "node dist/server.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dlckdgh0523-lgtm/nb07-welive-team4.git"
+    "url": "git+https://github.com/nb07-welive-team4/nb07-welive-team4.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/dlckdgh0523-lgtm/nb07-welive-team4/issues"
+    "url": "https://github.com/nb07-welive-team4/nb07-welive-team4/issues"
   },
-  "homepage": "https://github.com/dlckdgh0523-lgtm/nb07-welive-team4#readme",
+  "homepage": "https://github.com/nb07-welive-team4/nb07-welive-team4#readme",
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^5.2.1"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/node": "^24.12.0",
-    "nodemon": "^3.1.14",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "@types/node": "^24.0.0",
     "ts-node": "^10.9.2",
-    "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
+    "typescript": "^5.8.0"
   }
 }
