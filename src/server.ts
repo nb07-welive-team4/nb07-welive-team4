@@ -1,6 +1,8 @@
 import express from "express";
 import type { Request, Response } from "express";
 import cors from "cors";
+import commentRouter from "./routes/comment-route.js";
+import errorHandler from "./middlewares/error-handler.js";
 import { getEnv } from "./config/env.js";
 
 const env = getEnv();
@@ -13,6 +15,9 @@ app.use(
 );
 
 app.use(express.json());
+
+// Commnet 라우터
+app.use("/api/comments", commentRouter);
 
 app.get("/health", (_req: Request, res: Response) => {
   res.status(200).json({
@@ -36,6 +41,8 @@ app.use((_req: Request, res: Response) => {
     message: "Not Found",
   });
 });
+
+app.use(errorHandler);
 
 const server = app.listen(env.PORT, () => {
   console.log(`[BOOT] api is running on port ${env.PORT}`);

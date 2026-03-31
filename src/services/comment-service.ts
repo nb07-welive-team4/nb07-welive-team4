@@ -1,10 +1,10 @@
-import { commentRepository } from "../repositories/comment-repository";
+import { commentRepository } from "../repositories/comment-repository.js";
 import {
   CreateCommentBody,
   UpdateCommentBody,
   CommentResponse,
-} from "../types/comment-types";
-import { NotFoundError, ForbiddenError } from "../errors/app-error";
+} from "../types/comment-types.js";
+import { NotFoundError, ForbiddenError } from "../errors/app-error.js";
 
 // 응답 포맷 정제
 const formatComment = (comment: any): CommentResponse => ({

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { StructError } from "superstruct";
-import { AppError } from "../errors/app-error";
+import { AppError } from "../errors/app-error.js";
 
 const errorHandler = (
   err: unknown,
