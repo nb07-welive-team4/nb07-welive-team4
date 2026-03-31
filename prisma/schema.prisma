@@ -26,8 +26,11 @@ enum JoinStatus {
 model User {
   id                String   @id @default(uuid())
   email             String   @unique
+  username          String   @unique
+  contact           String   @unique
   password          String
-  name              String?
+  name              String
+  avatar            String?
   role              Role     @default(USER)
   // 승인상태
   joinStatus        JoinStatus @default(PENDING)
@@ -47,12 +50,26 @@ model User {
   residenceApartment Apartment? @relation("ApartmentResidents", fields: [residentApartmentId], references: [id])
   residentApartmentId String?
 
+  refreshTokens RefreshToken[]
   complaints Complaint[] @relation("UserComplaints")
   polls      Poll[]      @relation("UserPolls")
   notices    Notice[]    @relation("UserNotices")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device    String?
+  ip        String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 enum ApartMentStatus {
@@ -84,13 +101,16 @@ model Apartment {
   // 거주자 관계 (1:N)
   residents          User[]   @relation("ApartmentResidents")
 
+  // 아파트 게시판 관계
+  boards             Board[]
+
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
 
 enum BoardType {
   NOTICE
-  POOL
+  POLL
   COMPLAINT
 }
 
@@ -100,6 +120,9 @@ model Board {
   type        BoardType
 
   // 관계 설정
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id])
+
   complaints  Complaint[]
   polls       Poll[]
   notices     Notice[]
@@ -125,7 +148,7 @@ model Complaint {
   updatedAt   DateTime @updatedAt
 }
 
-enum PoolStatus {
+enum PollStatus {
   PENDING
   IN_PROGRESS
   CLOSED
@@ -133,7 +156,7 @@ enum PoolStatus {
 
 model Poll {
   id                  String      @id @default(uuid())
-  status              PoolStatus  @default(PENDING)
+  status              PollStatus  @default(PENDING)
   title               String
   content             String
   buildingPermission  Int         @default(0)

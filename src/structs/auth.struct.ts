@@ -1,12 +1,4 @@
-import {
-  object,
-  string,
-  pattern,
-  enums,
-  size,
-  Infer,
-  optional,
-} from "superstruct";
+import { object, string, pattern, enums, size, Infer, optional } from "superstruct";
 
 const Contact = pattern(string(), /^010\d{8}$/);
 
@@ -51,6 +43,12 @@ export const SuperAdminStruct = object({
   joinStatus: enums(["APPROVED"]),
 });
 
+export const LoginStruct = object({
+  username: size(string(), 3, 20),
+  password: size(string(), 8, 20),
+});
+
 export type createUser = Infer<typeof UserStruct>;
 export type createAdmin = Infer<typeof AdminStruct>;
 export type createSuperAdmin = Infer<typeof SuperAdminStruct>;
+export type loginData = Infer<typeof LoginStruct>;
