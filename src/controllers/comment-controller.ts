@@ -1,10 +1,18 @@
 import { Request, Response, NextFunction } from "express";
 import { assert } from "superstruct";
+<<<<<<< HEAD
 import { commentService } from "../services/comment-service.js";
 import {
   CreateCommentStruct,
   UpdateCommentStruct,
 } from "../structs/comment-structs.js";
+=======
+import { commentService } from "../services/comment-service";
+import {
+  CreateCommentStruct,
+  UpdateCommentStruct,
+} from "../structs/comment-structs";
+>>>>>>> 05aa83d9eee98d67937dad4e945e1bc97c3a057b
 
 // POST /api/comments
 const createComment = async (
@@ -55,7 +63,11 @@ const deleteComment = async (
   next: NextFunction,
 ) => {
   try {
+<<<<<<< HEAD
     const commentId = req.params["commentId"] as string;
+=======
+    const { commentId } = req.params;
+>>>>>>> 05aa83d9eee98d67937dad4e945e1bc97c3a057b
     const requestUserId = req.user.id;
     const requestUserRole = req.user.role;
 
