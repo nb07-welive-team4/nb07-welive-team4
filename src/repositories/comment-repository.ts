@@ -1,7 +1,5 @@
-import { PrismaClient } from "../generated/prisma";
+import prisma from "../lib/prisma.js";
 import { CreateCommentBody, UpdateCommentBody } from "../types/comment-types.js";
-
-const prisma = new PrismaClient();
 
 // 댓글 단건 조회
 const findCommentById = async (commentId: string) => {
@@ -12,7 +10,7 @@ const findCommentById = async (commentId: string) => {
 };
 
 // 댓글 생성
-const createComment = async (authorId: number, body: CreateCommentBody) => {
+const createComment = async (authorId: string, body: CreateCommentBody) => {
   return prisma.comment.create({
     data: {
       content: body.content,

@@ -18,7 +18,7 @@ const formatComment = (comment: any): CommentResponse => ({
 
 // 댓글 생성
 const createComment = async (
-  authorId: number,
+  authorId: string,
   body: CreateCommentBody,
 ): Promise<{ comment: CommentResponse }> => {
   const comment = await commentRepository.createComment(authorId, body);
@@ -28,7 +28,7 @@ const createComment = async (
 // 댓글 수정 (본인만)
 const updateComment = async (
   commentId: string,
-  requestUserId: number,
+  requestUserId: string,
   body: UpdateCommentBody,
 ): Promise<CommentResponse> => {
   const comment = await commentRepository.findCommentById(commentId);
@@ -44,7 +44,7 @@ const updateComment = async (
 // 댓글 삭제 (본인 또는 관리자)
 const deleteComment = async (
   commentId: string,
-  requestUserId: number,
+  requestUserId: string,
   requestUserRole: string,
 ): Promise<void> => {
   const comment = await commentRepository.findCommentById(commentId);
