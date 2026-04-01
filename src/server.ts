@@ -4,6 +4,9 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { getEnv } from "./config/env.js";
 import authRouter from "./routes/auth.route.js";
+import apartmentRouter from "./routes/apartment.routes";
+import { setupSwagger } from "./docs/swagger";
+import { errorHandler } from "./middlewares/errorHandler";
 
 const env = getEnv();
 const app = express();
@@ -16,6 +19,8 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
+
+setupSwagger(app);
 
 app.get("/health", (_req: Request, res: Response) => {
   res.status(200).json({
@@ -34,6 +39,9 @@ app.get("/api/ping", (_req: Request, res: Response) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/apartments", apartmentRouter);
+
+app.use(errorHandler);
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({

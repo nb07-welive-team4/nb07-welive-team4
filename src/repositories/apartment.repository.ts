@@ -1,8 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../lib/prisma";
 import { getSkip } from "../utils/pagination.util";
 import type { ApartmentPublicQuery, ApartmentAdminQuery } from "../types/apartment.types";
 
-const prisma = new PrismaClient();
+
 
 export const findApartmentsPublic = async (filters: ApartmentPublicQuery) => {
   const { keyword, name, address } = filters;

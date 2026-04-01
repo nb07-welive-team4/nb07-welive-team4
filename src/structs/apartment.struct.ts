@@ -1,4 +1,4 @@
-import { BadRequestError } from "../errors/AppError";
+import { BadRequestError } from "../errors/errors";
 import type { ApartmentAdminQuery, ApartmentPublicQuery } from "../types/apartment.types";
 
 export const validateApartmentPublicQuery = (
@@ -19,10 +19,10 @@ export const validateApartmentAdminQuery = (
 
   const validStatuses = ["PENDING", "APPROVED", "REJECTED"];
   if (apartmentStatus && !validStatuses.includes(String(apartmentStatus))) {
-    throw new BadRequestError("유효하지 않은 아파트 상태입니다.");
+    throw new BadRequestError("?�효?��? ?��? ?�파???�태?�니??");
   }
-  if (page && isNaN(Number(page))) throw new BadRequestError("page는 숫자여야 합니다.");
-  if (limit && isNaN(Number(limit))) throw new BadRequestError("limit은 숫자여야 합니다.");
+  if (page && isNaN(Number(page))) throw new BadRequestError("page???�자?�야 ?�니??");
+  if (limit && isNaN(Number(limit))) throw new BadRequestError("limit?� ?�자?�야 ?�니??");
 
   const result: ApartmentAdminQuery = {};
   if (typeof name === "string" && name.trim()) result.name = name.trim();
