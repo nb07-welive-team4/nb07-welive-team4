@@ -1,7 +1,5 @@
-import { PrismaClient } from "../generated/prisma/client";
+import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient({
-  accelerateUrl: process.env.DATABASE_URL ?? "postgresql://postgres:postgres@localhost:5433/welive",
-});
+const prisma = new PrismaClient();
 
 export default prisma;

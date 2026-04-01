@@ -1,16 +1,12 @@
-export type UserRole = "SUPER_ADMIN" | "ADMIN" | "USER";
-
-export interface AuthUser {
-  id: number;
+export interface CreateUserDTO {
+  username: string;
+  password: string;
+  contact: string;
   name: string;
-  role: UserRole;
-  apartmentId?: number;
-}
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: AuthUser;
-    }
-  }
+  email: string;
+  role: "USER" | "ADMIN" | "SUPER_ADMIN";
+  apartmentName?: string;
+  apartmentDong?: string;
+  apartmentHo?: string;
+  joinStatus?: "APPROVED";
 }

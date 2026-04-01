@@ -2,42 +2,50 @@
   "name": "nb07-welive-team4",
   "version": "1.0.0",
   "description": "",
-  "main": "src/server.js",
+  "main": "dist/server.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "build": "tsc",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dlckdgh0523-lgtm/nb07-welive-team4.git"
+    "url": "git+https://github.com/nb07-welive-team4/nb07-welive-team4.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/dlckdgh0523-lgtm/nb07-welive-team4/issues"
+    "url": "https://github.com/nb07-welive-team4/nb07-welive-team4/issues"
   },
-  "homepage": "https://github.com/dlckdgh0523-lgtm/nb07-welive-team4#readme",
+  "homepage": "https://github.com/nb07-welive-team4/nb07-welive-team4#readme",
   "dependencies": {
-    "@prisma/client": "^7.5.0",
+    "@prisma/adapter-pg": "^7.6.0",
+    "@prisma/client": "^7.6.0",
     "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "struct": "^0.0.12",
     "superstruct": "^2.0.2",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.0.0",
     "@types/struct": "^0.0.8",
     "@types/swagger-ui-express": "^4.1.8",
-    "dotenv": "^17.3.1",
     "nodemon": "^3.1.14",
-    "prisma": "^7.6.0",
+    "prisma": "^7.5.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   }
 }

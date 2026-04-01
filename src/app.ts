@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 import apartmentRouter from "./routes/apartment.routes";
 
-import { errorHandler } from "./middlewares/errorHandler.middleware";
+import { errorHandler } from "./middlewares/errorHandler";
 import { setupSwagger } from "./docs/swagger";
 
 dotenv.config();

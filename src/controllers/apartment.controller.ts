@@ -28,8 +28,8 @@ export const getApartmentPublicById = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const id = Number(req.params["id"]);
-    if (isNaN(id)) throw new BadRequestError("유효한 id를 입력해주세요.");
+    const id = req.params["id"] as string;
+    if (!id) throw new BadRequestError("id가 필요합니다.");
     const result = await apartmentService.getApartmentPublicById(id);
     res.status(200).json(result);
   } catch (err) {
@@ -59,8 +59,8 @@ export const getApartmentById = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const id = Number(req.params["id"]);
-    if (isNaN(id)) throw new BadRequestError("유효한 id를 입력해주세요.");
+    const id = req.params["id"] as string;
+    if (!id) throw new BadRequestError("id가 필요합니다.");
     const result = await apartmentService.getApartmentById(id);
     res.status(200).json(result);
   } catch (err) {

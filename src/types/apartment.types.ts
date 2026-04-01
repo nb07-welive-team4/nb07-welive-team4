@@ -1,13 +1,13 @@
 export type ApartmentStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export interface ApartmentPublicItem {
-  id: number;
+  id: string;
   name: string;
   address: string;
 }
 
 export interface ApartmentPublicDetail {
-  id: number;
+  id: string;
   name: string;
   address: string;
   startComplexNumber: string;
@@ -23,7 +23,7 @@ export interface ApartmentPublicDetail {
 }
 
 export interface ApartmentAdminItem {
-  id: number;
+  id: string;
   name: string;
   address: string;
   officeNumber: string;
@@ -37,7 +37,7 @@ export interface ApartmentAdminItem {
   startHoNumber: string;
   endHoNumber: string;
   apartmentStatus: ApartmentStatus;
-  adminId: number;
+  adminId: string;
 }
 
 export interface ApartmentListPublicResponse {

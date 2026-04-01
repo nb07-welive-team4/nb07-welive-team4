@@ -1,6 +1,8 @@
-import prisma from "../models/prisma";
+import { PrismaClient } from "@prisma/client";
 import { getSkip } from "../utils/pagination.util";
 import type { ApartmentPublicQuery, ApartmentAdminQuery } from "../types/apartment.types";
+
+const prisma = new PrismaClient();
 
 export const findApartmentsPublic = async (filters: ApartmentPublicQuery) => {
   const { keyword, name, address } = filters;
@@ -20,7 +22,7 @@ export const findApartmentsPublic = async (filters: ApartmentPublicQuery) => {
   });
 };
 
-export const findApartmentPublicById = async (id: number) => {
+export const findApartmentPublicById = async (id: string) => {
   return prisma.apartment.findUnique({
     where: { id, apartmentStatus: "APPROVED" },
     select: {
@@ -51,18 +53,28 @@ export const findApartments = async (
       OR: [
         { name: { contains: searchKeyword, mode: "insensitive" as const } },
         { address: { contains: searchKeyword, mode: "insensitive" as const } },
+        { admin: { name: { contains: searchKeyword, mode: "insensitive" as const } } },
+        { admin: { email: { contains: searchKeyword, mode: "insensitive" as const } } },
       ],
     }),
   };
 
   const [apartments, totalCount] = await Promise.all([
-    prisma.apartment.findMany({ where, skip: getSkip(page, limit), take: limit }),
+    prisma.apartment.findMany({
+      where,
+      skip: getSkip(page, limit),
+      take: limit,
+      include: { admin: { select: { name: true, contact: true, email: true } } },
+    }),
     prisma.apartment.count({ where }),
   ]);
 
   return { apartments, totalCount };
 };
 
-export const findApartmentById = async (id: number) => {
-  return prisma.apartment.findUnique({ where: { id } });
+export const findApartmentById = async (id: string) => {
+  return prisma.apartment.findUnique({
+    where: { id },
+    include: { admin: { select: { name: true, contact: true, email: true } } },
+  });
 };

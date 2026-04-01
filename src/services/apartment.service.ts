@@ -1,5 +1,5 @@
 import * as apartmentRepository from "../repositories/apartment.repository";
-import { NotFoundError, BadRequestError } from "../errors/AppError";
+import { NotFoundError } from "../errors/AppError";
 import { parsePagination } from "../utils/pagination.util";
 import { calcDongRange, calcHoRange } from "../utils/apartment.util";
 import type {
@@ -17,7 +17,7 @@ export const getApartmentsPublic = async (
   return { apartments, count: apartments.length };
 };
 
-export const getApartmentPublicById = async (id: number): Promise<ApartmentPublicDetail> => {
+export const getApartmentPublicById = async (id: string): Promise<ApartmentPublicDetail> => {
   const apartment = await apartmentRepository.findApartmentPublicById(id);
   if (!apartment) throw new NotFoundError("아파트를 찾을 수 없습니다.");
   return {
@@ -34,7 +34,7 @@ export const getApartments = async (
   return apartmentRepository.findApartments({ ...query, page, limit });
 };
 
-export const getApartmentById = async (id: number) => {
+export const getApartmentById = async (id: string) => {
   const apartment = await apartmentRepository.findApartmentById(id);
   if (!apartment) throw new NotFoundError("아파트를 찾을 수 없습니다.");
   return {
