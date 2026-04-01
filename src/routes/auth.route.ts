@@ -15,5 +15,8 @@ authRouter.post("/refresh", authController.refresh);
 authRouter.use(authMiddleware);
 authRouter.post("/logout", authController.logout);
 authRouter.patch("/admins/:adminId/status", authController.updateAdminStatus);
+authRouter.patch("/admins/status", authController.bulkUpdateAdminStatus);
+authRouter.patch("/residents/:residentId/status", authController.updateResidentStatus);
+authRouter.patch("/residents/status", authController.bulkUpdateResidentStatus);
 
 export default authRouter;

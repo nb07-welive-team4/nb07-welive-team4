@@ -5,9 +5,10 @@ import {
   AdminStruct,
   LoginStruct,
   SuperAdminStruct,
-  UpdateAdminStatusStruct,
+  UpdateStatusStruct,
   UserStruct,
   AdminId,
+  ResidentId,
 } from "../structs/auth.struct";
 import { ForbiddenError, UnauthorizedError } from "../errors/errors";
 
@@ -106,16 +107,71 @@ export class AuthController {
     res.status(204).end();
   };
 
+  /**
+   * 특정 관리자의 가입 승인 상태를 변경 (super-admin 전용)
+   * @route PATCH /api/auth/admins/:adminId/status
+   */
   updateAdminStatus = async (req: Request, res: Response) => {
-    const role = req.user.role;
-    if (role !== "SUPER_ADMIN") {
-      throw new ForbiddenError("권한이 없습니다.");
-    }
+    this.checkPermission(req, "SUPER_ADMIN");
 
     const { adminId } = create(req.params, AdminId);
-    const { status } = create(req.body, UpdateAdminStatusStruct);
+    const { status } = create(req.body, UpdateStatusStruct);
     await this.authService.updateAdminStatus(adminId, status);
 
     res.status(200).json({ message: "작업이 성공적으로 완료되었습니다." });
   };
+
+  /**
+   * 가입 승인을 대기 중인 모든 관리자의 가입 상태를 일괄 변경 (super-admin 전용)
+   * @route PATCH /api/auth/admins/status
+   */
+  bulkUpdateAdminStatus = async (req: Request, res: Response) => {
+    this.checkPermission(req, "SUPER_ADMIN");
+
+    const { status } = create(req.body, UpdateStatusStruct);
+    await this.authService.bulkUpdateAdminStatus(status);
+
+    res.status(200).json({ message: "작업이 성공적으로 완료되었습니다." });
+  };
+
+  /**
+   * 특정 주민의 가입 승인 상태를 변경 (admin 전용)
+   * @route PATCH /api/auth/residents/:residentId/status
+   */
+  updateResidentStatus = async (req: Request, res: Response) => {
+    this.checkPermission(req, "ADMIN");
+
+    const { residentId } = create(req.params, ResidentId);
+    const { status } = create(req.body, UpdateStatusStruct);
+    await this.authService.updateResidentStatus(residentId, status);
+
+    res.status(200).json({ message: "작업이 성공적으로 완료되었습니다." });
+  };
+
+  /**
+   * 해당 아파트의 모든 대기 중인 주민 가입 상태를 일괄 변경 (admin 전용)
+   * @route PATCH /api/auth/residents/status
+   */
+  bulkUpdateResidentStatus = async (req: Request, res: Response) => {
+    this.checkPermission(req, "ADMIN");
+
+    const userId = req.user.id;
+    const { status } = create(req.body, UpdateStatusStruct);
+    await this.authService.bulkUpdateResidentStatus(userId, status);
+
+    res.status(200).json({ message: "작업이 성공적으로 완료되었습니다." });
+  };
+
+  /**
+   * 요청 사용자의 역할(Role)이 필요한 권한과 일치하는지 확인
+   * @param req - Express Request 객체
+   * @param requiredRole - 허용된 역할 (SUPER_ADMIN 또는 ADMIN)
+   * @throws {ForbiddenError} 권한이 일치하지 않을 경우 발생
+   * @private
+   */
+  private checkPermission(req: Request, requiredRole: "SUPER_ADMIN" | "ADMIN") {
+    if (req.user.role !== requiredRole) {
+      throw new ForbiddenError("권한이 없습니다.");
+    }
+  }
 }
