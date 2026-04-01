@@ -1,5 +1,6 @@
 export type ApartmentStatus = "PENDING" | "APPROVED" | "REJECTED";
 
+//일반용
 export interface ApartmentPublicItem {
   id: string;
   name: string;
@@ -22,6 +23,7 @@ export interface ApartmentPublicDetail {
   hoRange: { start: string; end: string };
 }
 
+//관리자용
 export interface ApartmentAdminItem {
   id: string;
   name: string;
@@ -38,7 +40,11 @@ export interface ApartmentAdminItem {
   endHoNumber: string;
   apartmentStatus: ApartmentStatus;
   adminId: string;
+  adminName: string | null;
+  adminContact: string | null;
+  adminEmail: string | null;
 }
+
 
 export interface ApartmentListPublicResponse {
   apartments: ApartmentPublicItem[];
@@ -49,6 +55,7 @@ export interface ApartmentListAdminResponse {
   apartments: ApartmentAdminItem[];
   totalCount: number;
 }
+
 
 export interface ApartmentPublicQuery {
   keyword?: string;
