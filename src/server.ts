@@ -1,12 +1,9 @@
 import express from "express";
 import type { Request, Response } from "express";
 import cors from "cors";
-<<<<<<< HEAD
+import cookieParser from "cookie-parser";
 import commentRouter from "./routes/comment-route.js";
 import errorHandler from "./middlewares/error-handler.js";
-=======
-import cookieParser from "cookie-parser";
->>>>>>> develop
 import { getEnv } from "./config/env.js";
 import authRouter from "./routes/auth.route.js";
 
@@ -22,7 +19,7 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-// Commnet 라우터
+// 댓글 라우터
 app.use("/api/comments", commentRouter);
 
 app.get("/health", (_req: Request, res: Response) => {

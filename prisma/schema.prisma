@@ -220,7 +220,7 @@ model Comment {
   content     String
   boardId     String
   boardType   BoardType
-  authorId    Int
+  authorId    String
   author      User      @relation("UserComments", fields: [authorId], references: [id])
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

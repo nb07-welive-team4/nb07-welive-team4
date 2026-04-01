@@ -14,7 +14,7 @@ export interface UpdateCommentBody {
 
 export interface CommentResponse {
   id: string;
-  userId: number;
+  userId: string;
   writerName: string;
   content: string;
   createdAt: Date;
