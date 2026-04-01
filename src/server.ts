@@ -1,9 +1,14 @@
 import express from "express";
 import type { Request, Response } from "express";
 import cors from "cors";
+<<<<<<< HEAD
 import commentRouter from "./routes/comment-route.js";
 import errorHandler from "./middlewares/error-handler.js";
+=======
+import cookieParser from "cookie-parser";
+>>>>>>> develop
 import { getEnv } from "./config/env.js";
+import authRouter from "./routes/auth.route.js";
 
 const env = getEnv();
 const app = express();
@@ -11,10 +16,11 @@ const app = express();
 app.use(
   cors({
     origin: env.CORS_ORIGIN === "*" ? true : env.CORS_ORIGIN,
-  })
+  }),
 );
 
 app.use(express.json());
+app.use(cookieParser());
 
 // Commnet 라우터
 app.use("/api/comments", commentRouter);
@@ -34,6 +40,8 @@ app.get("/api/ping", (_req: Request, res: Response) => {
     success: true,
   });
 });
+
+app.use("/api/auth", authRouter);
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({
