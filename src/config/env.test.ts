@@ -1,4 +1,4 @@
-import { getEnv } from './env.js';
+import { getEnv } from './env';
 
 describe('getEnv', () => {
   it('returns PORT default 3000 when not set', () => {

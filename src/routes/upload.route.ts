@@ -3,7 +3,7 @@ import multer from "multer";
 import { randomUUID } from "crypto";
 import path from "path";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { s3 } from "../lib/s3.js";
+import { s3 } from "../lib/s3";
 
 const router = Router();
 

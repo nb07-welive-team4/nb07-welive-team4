@@ -4,10 +4,11 @@
     "outDir": "./dist",
 
     "esModuleInterop": true,
-    "module": "NodeNext",
+    "module": "CommonJS",
     "target": "ES2022",
     "types": ["node"],
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "Node",
+    "ignoreDeprecations": "6.0",
 
     "sourceMap": true,
     "declaration": true,
@@ -18,8 +19,8 @@
 
     "strict": true,
     "verbatimModuleSyntax": false,
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
+    "isolatedModules": false,
+    "noUncheckedSideEffectImports": false,
     "moduleDetection": "force",
     "skipLibCheck": true
   },

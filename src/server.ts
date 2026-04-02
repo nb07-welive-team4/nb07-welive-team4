@@ -2,12 +2,12 @@ import express from "express";
 import type { Request, Response } from "express";
 import cors from "cors";
 import "dotenv/config";
-import { getEnv } from "./config/env.js";
-import uploadRouter from "./routes/upload.route.js";
-import dbRouter from "./routes/db.route.js";
-import { db } from "./lib/db.js";
+import { getEnv } from "./config/env";
+import uploadRouter from "./routes/upload.route";
+import dbRouter from "./routes/db.route";
+import { db } from "./lib/db";
 import cookieParser from "cookie-parser";
-import authRouter from "./routes/auth.route.js";
+import authRouter from "./routes/auth.route";
 
 const env = getEnv();
 const app = express();

@@ -3,14 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "dist/server.js",
-  "type": "module",
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
-    "test:ci": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --ci --passWithNoTests",
-    "test:integration": "cross-env NODE_OPTIONS=--experimental-vm-modules jest __tests__/integration"
+    "test": "jest",
+    "test:ci": "jest --ci --passWithNoTests",
+    "test:integration": "jest __tests__/integration"
   },
   "repository": {
     "type": "git",
