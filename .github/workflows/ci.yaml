@@ -7,19 +7,31 @@ on:
       - main
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npx prisma generate
+      - name: Test
+        run: npm run test:ci
+      - name: Build
+        run: npm run build
+
   docker-health-check:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
+      - uses: actions/checkout@v5
       - name: Build Docker image
         run: docker build -t advanced-backend .
-
       - name: Run container
         run: docker run -d --name advanced-backend -p 3000:3000 advanced-backend
-
       - name: Wait and check health
         run: |
           for i in $(seq 1 20); do
@@ -30,7 +42,6 @@ jobs:
           done
           docker logs advanced-backend
           exit 1
-
       - name: Cleanup
         if: always()
         run: docker rm -f advanced-backend || true
