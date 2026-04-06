@@ -27,4 +27,23 @@ export class ApartRepo {
 
     return apartmentId;
   };
+
+  updateApartment = async (id: string, data: Prisma.ApartmentUpdateInput, tx: Prisma.TransactionClient) => {
+    await tx.apartment.update({
+      where: { id },
+      data,
+    });
+  };
+
+  deleteApart = async (id: string, tx: Prisma.TransactionClient) => {
+    await tx.apartment.delete({
+      where: { id },
+    });
+  };
+
+  deleteApartmentsById = async (ids: string[], tx: Prisma.TransactionClient) => {
+    await tx.apartment.deleteMany({
+      where: { id: { in: ids } },
+    });
+  };
 }

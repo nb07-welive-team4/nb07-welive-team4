@@ -1,6 +1,7 @@
 import { Prisma, JoinStatus } from "@prisma/client";
 import prisma from "../lib/prisma";
 import { CreateUserDTO } from "../types/auth.type";
+import { text } from "stream/consumers";
 
 export class AuthRepo {
   /**
@@ -123,7 +124,7 @@ export class AuthRepo {
   findById = async (id: string) => {
     return await prisma.user.findUnique({
       where: { id },
-      select: { id: true, role: true, joinStatus: true, residentApartmentId: true },
+      select: { id: true, role: true, joinStatus: true, residentApartmentId: true, managedApartment: true },
     });
   };
 
@@ -165,6 +166,64 @@ export class AuthRepo {
     await prisma.user.updateMany({
       where: { residentApartmentId: apartmentId, joinStatus: "PENDING", role: "USER" },
       data: { joinStatus: status },
+    });
+  };
+
+  /**
+   * 특정 관리자(ADMIN)의 계정 정보를 업데이트
+   * @param adminId - 수정할 관리자 ID
+   * @param data - 업데이트할 유저 데이터
+   * @param tx - 트랜잭션 클라이언트
+   */
+  updateAdmin = async (adminId: string, data: Prisma.UserUpdateInput, tx: Prisma.TransactionClient) => {
+    await tx.user.update({
+      where: { id: adminId },
+      data: data,
+    });
+  };
+
+  /**
+   * 특정 유저 계정을 삭제
+   * - 관리자 삭제 시 아파트 삭제와 함께 실행됨
+   * @param id - 삭제할 유저 ID
+   * @param tx - 트랜잭션 클라이언트
+   */
+  deleteUser = async (id: string, tx: Prisma.TransactionClient) => {
+    await tx.user.delete({
+      where: { id },
+    });
+  };
+
+  /**
+   * 가입 거절(REJECTED) 상태인 모든 관리자 목록을 조회
+   * - 성능 최적화를 위해 삭제 판단에 필요한 ID와 연관 아파트 ID만 선택적으로 조회
+   * @returns 거절된 관리자 ID와 해당 관리자가 소유한 아파트 ID 목록
+   */
+  rejectedAdmin = async () => {
+    return await prisma.user.findMany({
+      where: { role: "ADMIN", joinStatus: "REJECTED" },
+      select: { id: true, managedApartment: { select: { id: true } } },
+    });
+  };
+
+  /**
+   * 전달받은 ID 목록에 해당하는 관리자 계정들을 일괄 삭제
+   * @param ids - 삭제할 관리자 ID 배열
+   * @param tx - 트랜잭션 클라이언트
+   */
+  adminClean = async (ids: string[], tx: Prisma.TransactionClient) => {
+    await tx.user.deleteMany({
+      where: { id: { in: ids } },
+    });
+  };
+
+  /**
+   * 특정 아파트에 소속된 가입 거절(REJECTED) 상태의 일반 주민(USER)들을 일괄 삭제
+   * @param apartmentId - 대상 아파트 ID
+   */
+  residentClean = async (apartmentId: string) => {
+    await prisma.user.deleteMany({
+      where: { role: "USER", joinStatus: "REJECTED", residentApartmentId: apartmentId },
     });
   };
 }

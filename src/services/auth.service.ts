@@ -1,4 +1,4 @@
-import { createUser, createAdmin, createSuperAdmin, loginData } from "../structs/auth.struct";
+import { CreateUserType, CreateAdmin, CreateSuperAdmin, LoginData, UpdateAdminInfo } from "../structs/auth.struct";
 import { AuthRepo } from "../repositories/auth.repository";
 import { ApartRepo } from "../repositories/apart.repository";
 import { BadRequestError, NotFoundError, UnauthorizedError, ConflictError } from "../errors/errors";
@@ -19,7 +19,7 @@ export class AuthService {
    * @throws {NotFoundError} 아파트 정보가 DB에 없을 경우 발생 (USER 권한 가입 시)
    * @returns 가입 완료된 유저 정보
    */
-  register = async (data: createUser | createAdmin | createSuperAdmin) => {
+  register = async (data: CreateUserType | CreateAdmin | CreateSuperAdmin) => {
     const [existingUsername, existingEmail, existingContract] = await Promise.all([
       this.authRepo.findUniqueUser({ username: data.username }),
       this.authRepo.findUniqueUser({ email: data.email }),
@@ -116,7 +116,7 @@ export class AuthService {
    * @param data - 로그인 입력 데이터 (username, password)
    * @throws {UnauthorizedError} 아이디가 없거나 비밀번호가 틀린 경우 발생
    */
-  login = async (data: loginData) => {
+  login = async (data: LoginData) => {
     const user = await this.authRepo.findByUsername(data.username);
     if (!user) {
       throw new UnauthorizedError("아이디 또는 비밀번호가 일치하지 않습니다.");
@@ -261,5 +261,103 @@ export class AuthService {
       throw new NotFoundError("관리 중인 아파트 정보가 존재하지 않습니다.");
     }
     await this.authRepo.bulkUpdateResidentStatus(apartmentId, status);
+  };
+
+  /**
+   * 특정 관리자(ADMIN) 및 관리 아파트 정보를 수정
+   * - 관리자 기본 정보와 아파트 정보를 분리하여 각각의 Repository에 업데이트 요청
+   * - 아파트 관련 필드가 포함된 경우, 해당 관리자에게 연결된 아파트가 있는지 사전에 검증
+   * @param adminId - 수정 대상 관리자 ID
+   * @param data - 수정할 관리자 및 아파트 데이터 (Partial)
+   * @throws {NotFoundError} 관리자 또는 아파트 정보가 DB에 없을 경우 발생
+   */
+  updateAdminInfo = async (adminId: string, data: UpdateAdminInfo) => {
+    const admin = await this.authRepo.findById(adminId);
+    if (!admin) throw new NotFoundError("해당 어드민을 찾을 수 없습니다.");
+
+    const apartmentId = admin.managedApartment?.id;
+    const { apartmentName, apartmentAddress, apartmentManagementNumber, description, ...adminFields } = data;
+    const isApartmentUpdateField = !!(apartmentName || apartmentAddress || apartmentManagementNumber || description);
+    if (isApartmentUpdateField && !apartmentId) {
+      throw new NotFoundError("해당 어드민이 관리하는 아파트 정보가 없습니다.");
+    }
+
+    await prisma.$transaction(async (tx) => {
+      const adminFieldsPayload = Object.fromEntries(Object.entries(adminFields).filter(([_, v]) => v !== undefined));
+
+      if (Object.keys(adminFieldsPayload).length > 0) {
+        await this.authRepo.updateAdmin(adminId, adminFieldsPayload, tx);
+      }
+
+      if (isApartmentUpdateField) {
+        const apartmentUpdatePayload = {
+          ...(apartmentName && { name: apartmentName }),
+          ...(apartmentAddress && { address: apartmentAddress }),
+          ...(apartmentManagementNumber && { officeNumber: apartmentManagementNumber }),
+          ...(description && { description }),
+        };
+
+        await this.apartRepo.updateApartment(apartmentId!, apartmentUpdatePayload, tx);
+      }
+    });
+  };
+
+  /**
+   * 특정 관리자 계정과 그와 연결된 아파트 데이터를 삭제
+   * - 계정 삭제와 아파트 삭제를 하나의 트랜잭션으로 묶어 유령 데이터 현상 방지
+   * @param adminId - 삭제 대상 관리자 ID
+   * @throws {NotFoundError} 관리자가 존재하지 않을 경우
+   * @throws {BadRequestError} 관리자와 연결된 아파트 정보가 없을 경우
+   */
+  deleteAdmin = async (adminId: string) => {
+    const admin = await this.authRepo.findById(adminId);
+    if (!admin) throw new NotFoundError("해당 어드민을 찾을 수 없습니다.");
+
+    const apartmentId = admin.managedApartment?.id;
+    if (!apartmentId) {
+      throw new BadRequestError("어드민과 연결된 아파트 정보가 없습니다.");
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await this.authRepo.deleteUser(adminId, tx);
+      await this.apartRepo.deleteApart(apartmentId, tx);
+    });
+  };
+
+  /**
+   * 가입 거절(REJECTED) 상태인 모든 관리자와 그들의 아파트 정보를 일괄 삭제 (SUPER_ADMIN용)
+   * - 대량 삭제 시의 성능 향상을 위해 대상 ID를 선추출한 후 일괄 처리(deleteMany) 수행
+   */
+  adminClean = async () => {
+    const rejectedAdmins = await this.authRepo.rejectedAdmin();
+
+    if (rejectedAdmins.length === 0) return;
+
+    const adminIds = rejectedAdmins.map((a) => a.id);
+    const apartmentIds = rejectedAdmins.map((a) => a.managedApartment?.id).filter((id): id is string => !!id);
+
+    await prisma.$transaction(async (tx) => {
+      await this.authRepo.adminClean(adminIds, tx);
+
+      await this.apartRepo.deleteApartmentsById(apartmentIds, tx);
+    });
+  };
+
+  /**
+   * 본인 관리 아파트에 소속된 가입 거절(REJECTED) 상태의 주민들을 일괄 삭제 (ADMIN용)
+   * @param adminId - 요청을 수행하는 관리자 ID
+   * @throws {NotFoundError} 관리자 정보가 없을 경우
+   * @throws {BadRequestError} 관리 중인 아파트 정보가 없을 경우
+   */
+  residentClean = async (adminId: string) => {
+    const admin = await this.authRepo.findById(adminId);
+    if (!admin) throw new NotFoundError("해당 어드민을 찾을 수 없습니다.");
+
+    const apartmentId = admin.managedApartment?.id;
+    if (!apartmentId) {
+      throw new BadRequestError("어드민과 연결된 아파트 정보가 없습니다.");
+    }
+
+    await this.authRepo.residentClean(apartmentId);
   };
 }
