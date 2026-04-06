@@ -1,6 +1,6 @@
 process.env.JWT_SECRET = "test_secret_key_12345";
-process.env.ACCESS_TOKEN_SECRET = "test_access_token_secret_123";
-process.env.REFRESH_TOKEN_SECRET = "test_refresh_token_secret_123";
+process.env.JWT_ACCESS_SECRET = "your_super_secret_key_1";
+process.env.JWT_REFRESH_SECRET = "your_super_secret_key_2";
 
 // AWS S3 관련 (mocking)
 process.env.AWS_REGION = "ap-northeast-2";
