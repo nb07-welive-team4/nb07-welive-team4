@@ -1,3 +1,5 @@
+import { jest } from "@jest/globals";
+
 jest.mock("../src/routes/upload.route", () => {
   const express = require("express");
   const router = express.Router();
