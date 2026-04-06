@@ -1,3 +1,13 @@
+jest.mock("../src/routes/upload.route", () => {
+  const express = require("express");
+  const router = express.Router();
+  return router; // 빈 라우터를 반환하여 내부의 S3 검증 로직 실행을 차단
+});
+
+jest.mock("../src/lib/s3", () => ({
+  s3: { send: jest.fn() },
+}));
+
 import dotenv from "dotenv";
 dotenv.config();
 

@@ -3,6 +3,8 @@ import { Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { getEnv } from "./config/env.js";
+import uploadRouter from "./routes/upload.route";
+import dbRouter from "./routes/db.route";
 import authRouter from "./routes/auth.route";
 import { errorHandler } from "./middlewares/errorHandler";
 
@@ -36,6 +38,8 @@ app.get("/api/ping", (_req: Request, res: Response) => {
 });
 
 // 라우터 설정...
+app.use("/api", uploadRouter);
+app.use("/api", dbRouter);
 app.use("/api/auth", authRouter);
 app.use(errorHandler);
 
