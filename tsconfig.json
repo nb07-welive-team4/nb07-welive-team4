@@ -1,38 +1,29 @@
 {
   "compilerOptions": {
-    // File Layout
     "rootDir": "./src",
     "outDir": "./dist",
 
-    // Environment Settings
-    // See also https://aka.ms/tsconfig/module
     "esModuleInterop": true,
-    "module": "esnext",
-    "target": "esnext",
-    "types": [],
-    "moduleResolution": "bundler",
-    // For nodejs:
-    // "lib": ["esnext"],
-    // "types": ["node"],
-    // and npm install -D @types/node
+    "module": "CommonJS",
+    "target": "ES2022",
+    "types": ["node"],
+    "moduleResolution": "Node",
+    "ignoreDeprecations": "6.0",
 
-    // Other Outputs
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
 
-    // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
 
-    // Recommended Options
     "strict": true,
-    "jsx": "react-jsx",
     "verbatimModuleSyntax": false,
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
+    "isolatedModules": false,
+    "noUncheckedSideEffectImports": false,
     "moduleDetection": "force",
     "skipLibCheck": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "src/__tests__"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }

@@ -1,19 +1,10 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "esModuleInterop": true,
-    "module": "esnext",
-    "target": "esnext",
-    "moduleResolution": "node16",
-    "sourceMap": true,
-    "strict": true,
-    "jsx": "react-jsx",
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "skipLibCheck": true,
-    "noUncheckedIndexedAccess": true,
-    "ignoreDeprecations": "6.0",
-    "types": ["jest", "node"]
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "types": ["node", "jest"],
+    "ignoreDeprecations": "6.0"
   },
   "include": ["src/**/*.ts", "test/**/*.ts"]
 }
