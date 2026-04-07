@@ -5,9 +5,10 @@
   "description": "",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
+    "build": "tsc -p tsconfig.build.json --noEmit && tsup",
     "dev": "tsx watch src/server.ts",
-    "start": "node --import tsx dist/server.js",
+    "start": "node dist/server.js",
     "test": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
     "test:watch": "jest --watch",
     "test:cov": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --coverage --detectOpenHandles --forceExit --runInBand",
@@ -62,6 +63,7 @@
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
+    "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "5.5"
   }
