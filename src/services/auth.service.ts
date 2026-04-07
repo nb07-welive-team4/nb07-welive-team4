@@ -1,6 +1,6 @@
 import { CreateUserType, CreateAdmin, CreateSuperAdmin, LoginData, UpdateAdminInfo } from "../structs/auth.struct";
 import { AuthRepo } from "../repositories/auth.repository";
-import { ApartRepo } from "../repositories/apart.repository";
+import { ApartRepo } from "../repositories/apartment.repository";
 import { BadRequestError, NotFoundError, UnauthorizedError, ConflictError } from "../errors/errors";
 import { LoginResponseDto } from "../models/auth.model";
 import bcrypt from "bcrypt";

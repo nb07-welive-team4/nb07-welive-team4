@@ -1,7 +1,6 @@
 import { Prisma, JoinStatus } from "@prisma/client";
 import prisma from "../lib/prisma";
 import { CreateUserDTO } from "../types/auth.type";
-import { text } from "stream/consumers";
 
 export class AuthRepo {
   /**
@@ -51,7 +50,7 @@ export class AuthRepo {
     return await prisma.user.findUnique({
       where: { username },
       include: {
-        residenceApartment: { include: { boards: true } }, // 일반 유저
+        residenceApartment: { include: { boards: true } },
       },
     });
   };
