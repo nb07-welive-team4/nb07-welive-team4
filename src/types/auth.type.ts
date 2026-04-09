@@ -1,12 +1,14 @@
 import { JwtPayload } from "jsonwebtoken";
 
+export type UserRole = "USER" | "ADMIN" | "SUPER_ADMIN";
+
 export interface CreateUserDTO {
   username: string;
   password: string;
   contact: string;
   name: string;
   email: string;
-  role: "USER" | "ADMIN" | "SUPER_ADMIN";
+  role: UserRole;
   residentApartmentId?: string;
   apartmentName?: string;
   apartmentDong?: string;
@@ -17,5 +19,5 @@ export interface CreateUserDTO {
 export interface AuthTokenPayload extends JwtPayload {
   id: string;
   username: string;
-  role: string;
+  role: UserRole;
 }
