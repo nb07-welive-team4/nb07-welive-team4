@@ -16,7 +16,7 @@ dotenv.config();
 import request from "supertest";
 import app from "../src/app";
 import prisma, { pool } from "../src/lib/prisma";
-import { db } from "../src/lib/db";
+
 const payload = {
   username: "superadmin",
   password: "password123!",
