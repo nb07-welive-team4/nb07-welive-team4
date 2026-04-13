@@ -6,6 +6,7 @@ import { getEnv } from "./config/env";
 import uploadRouter from "./routes/upload.route";
 import dbRouter from "./routes/db.route";
 import authRouter from "./routes/auth.route";
+import userRouter from "./routes/user.route";
 import apartmentRouter from "./routes/apartment.routes";
 import { setupSwagger } from "./docs/swagger";
 import { errorHandler } from "./middlewares/errorHandler";
@@ -44,6 +45,7 @@ app.get("/api/ping", (_req: Request, res: Response) => {
 app.use("/api", uploadRouter);
 app.use("/api", dbRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/users", userRouter);
 app.use("/api/apartments", apartmentRouter);
 app.use(errorHandler);
 
