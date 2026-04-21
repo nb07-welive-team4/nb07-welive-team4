@@ -2,8 +2,14 @@ import "dotenv/config";
 import { getEnv } from "./config/env";
 import { db } from "./lib/db";
 import app from "./app";
+import "./workers/notification.worker";
+import { subscribeNotificationChannel } from "./services/notification-realtime.service";
+import { startOtel, shutdownOtel } from "./lib/otel";
 
 const env = getEnv();
+
+startOtel();
+void subscribeNotificationChannel();
 
 const server = app.listen(env.PORT, "0.0.0.0", () => {
   console.log(`[BOOT] api is running on port ${env.PORT}`);
@@ -26,6 +32,7 @@ const shutdown = async (signal: string) => {
 
   server.close(async () => {
     try {
+      await shutdownOtel();
       await db.end();
       console.log("[DB] pool closed");
       process.exit(0);

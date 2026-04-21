@@ -7,6 +7,8 @@ import uploadRouter from "./routes/upload.route";
 import dbRouter from "./routes/db.route";
 import authRouter from "./routes/auth.route";
 import apartmentRouter from "./routes/apartment.routes";
+import notificationRouter from "./routes/notification.route";
+import queueRouter from "./routes/queue.route";
 import { setupSwagger } from "./docs/swagger";
 import { errorHandler } from "./middlewares/errorHandler";
 
@@ -45,6 +47,8 @@ app.use("/api", uploadRouter);
 app.use("/api", dbRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/apartments", apartmentRouter);
+app.use("/api/notifications", notificationRouter);
+app.use("/api/queue", queueRouter);
 app.use(errorHandler);
 
 app.use((_req: Request, res: Response) => {

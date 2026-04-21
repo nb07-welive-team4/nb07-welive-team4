@@ -51,9 +51,10 @@ model User {
   residentApartmentId String?
 
   refreshTokens RefreshToken[]
-  complaints Complaint[] @relation("UserComplaints")
-  polls      Poll[]      @relation("UserPolls")
-  notices    Notice[]    @relation("UserNotices")
+  complaints    Complaint[]    @relation("UserComplaints")
+  polls         Poll[]         @relation("UserPolls")
+  notices       Notice[]       @relation("UserNotices")
+  notifications Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -193,6 +194,28 @@ enum NoticeCategory {
   RESIDENT_VOTE
   RESIDENT_COUNCIL
   ETC
+}
+
+enum NotificationType {
+  COMPLAINT_RESOLVED
+  NOTICE_CREATED
+  POLL_CREATED
+}
+
+model Notification {
+  notificationId   String           @id @default(uuid())
+  userId           String
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content          String
+  notificationType NotificationType
+  isChecked        Boolean          @default(false)
+  dedupeKey        String?          @unique
+  complaintId      String?
+  noticeId         String?
+  pollId           String?
+  notifiedAt       DateTime         @default(now())
+
+  @@index([userId])
 }
 
 model Notice {
