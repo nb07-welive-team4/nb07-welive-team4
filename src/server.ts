@@ -5,6 +5,7 @@ import app from "./app";
 import "./workers/notification.worker";
 import { subscribeNotificationChannel } from "./services/notification-realtime.service";
 import { startOtel, shutdownOtel } from "./lib/otel";
+import { startPollScheduler } from "./utils/poll.scheduler";
 
 const env = getEnv();
 
@@ -13,6 +14,7 @@ void subscribeNotificationChannel();
 
 const server = app.listen(env.PORT, "0.0.0.0", () => {
   console.log(`[BOOT] api is running on port ${env.PORT}`);
+  startPollScheduler();
 });
 
 server.on("listening", () => {

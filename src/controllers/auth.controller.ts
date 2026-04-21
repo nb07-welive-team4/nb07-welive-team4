@@ -2,15 +2,17 @@ import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
 import { create } from "superstruct";
 import {
-  AdminStruct,
-  LoginStruct,
-  SuperAdminStruct,
-  UpdateStatusStruct,
-  UserStruct,
   AdminId,
   ResidentId,
+  CreateUserType,
+  CreateAdmin,
+  CreateSuperAdmin,
+  LoginData,
+  UpdateStatus,
+  UpdateAdminInfo,
 } from "../structs/auth.struct";
 import { ForbiddenError, UnauthorizedError } from "../errors/errors";
+import { ReplicationRuleStatus } from "@aws-sdk/client-s3";
 
 export class AuthController {
   private authService = new AuthService();
@@ -19,9 +21,10 @@ export class AuthController {
    * 일반 사용자 회원가입
    * @route POST /api/auth/signup
    */
-  createUser = async (req: Request, res: Response) => {
-    const createUserDto = create(req.body, UserStruct);
-    const user = await this.authService.register(createUserDto);
+  createUser = async (req: Request<{}, {}, CreateUserType>, res: Response) => {
+    const createUserData = req.body;
+
+    const user = await this.authService.register(createUserData);
 
     res.status(201).json(user);
   };
@@ -30,8 +33,8 @@ export class AuthController {
    * 아파트 관리자 회원가입
    * @route POST /api/auth/signup/admin
    */
-  createAdmin = async (req: Request, res: Response) => {
-    const createAdminDto = create(req.body, AdminStruct);
+  createAdmin = async (req: Request<{}, {}, CreateAdmin>, res: Response) => {
+    const createAdminDto = req.body;
     const admin = await this.authService.register(createAdminDto);
 
     res.status(201).json(admin);
@@ -41,8 +44,8 @@ export class AuthController {
    * 시스템 통합 관리자 회원가입
    * @route POST /api/auth/singup/super-admin
    */
-  createSuperAdmin = async (req: Request, res: Response) => {
-    const createSuperAdminDto = create(req.body, SuperAdminStruct);
+  createSuperAdmin = async (req: Request<{}, {}, CreateSuperAdmin>, res: Response) => {
+    const createSuperAdminDto = req.body;
     const superAdmin = await this.authService.register(createSuperAdminDto);
 
     res.status(201).json(superAdmin);
@@ -52,8 +55,8 @@ export class AuthController {
    * 사용자 로그인을 처리하고 인증 쿠키를 설정
    * @route POST /api/auth/login
    */
-  login = async (req: Request, res: Response) => {
-    const loginDto = create(req.body, LoginStruct);
+  login = async (req: Request<{}, {}, LoginData>, res: Response) => {
+    const loginDto = req.body;
     const { user, accessToken, refreshToken } = await this.authService.login(loginDto);
     this.setAuthCookies(res, accessToken, refreshToken);
 
@@ -107,6 +110,10 @@ export class AuthController {
     const refreshToken = req.cookies.refreshToken;
     await this.authService.logout(userId, refreshToken);
 
+    // 쿠키 삭제
+    res.clearCookie("accessToken", { path: "/" });
+    res.clearCookie("refreshToken", { path: "/" });
+
     res.status(204).end();
   };
 
@@ -114,11 +121,11 @@ export class AuthController {
    * 특정 관리자의 가입 승인 상태를 변경 (super-admin 전용)
    * @route PATCH /api/auth/admins/:adminId/status
    */
-  updateAdminStatus = async (req: Request, res: Response) => {
+  updateAdminStatus = async (req: Request<AdminId, {}, UpdateStatus>, res: Response) => {
     this.checkPermission(req, "SUPER_ADMIN");
 
-    const { adminId } = create(req.params, AdminId);
-    const { status } = create(req.body, UpdateStatusStruct);
+    const { adminId } = req.params;
+    const { status } = req.body;
     await this.authService.updateAdminStatus(adminId, status);
 
     res.status(200).json({ message: "작업이 성공적으로 완료되었습니다." });
@@ -128,10 +135,10 @@ export class AuthController {
    * 가입 승인을 대기 중인 모든 관리자의 가입 상태를 일괄 변경 (super-admin 전용)
    * @route PATCH /api/auth/admins/status
    */
-  bulkUpdateAdminStatus = async (req: Request, res: Response) => {
+  bulkUpdateAdminStatus = async (req: Request<{}, {}, UpdateStatus>, res: Response) => {
     this.checkPermission(req, "SUPER_ADMIN");
 
-    const { status } = create(req.body, UpdateStatusStruct);
+    const { status } = req.body;
     await this.authService.bulkUpdateAdminStatus(status);
 
     res.status(200).json({ message: "작업이 성공적으로 완료되었습니다." });
@@ -141,11 +148,11 @@ export class AuthController {
    * 특정 주민의 가입 승인 상태를 변경 (admin 전용)
    * @route PATCH /api/auth/residents/:residentId/status
    */
-  updateResidentStatus = async (req: Request, res: Response) => {
+  updateResidentStatus = async (req: Request<ResidentId, {}, UpdateStatus>, res: Response) => {
     this.checkPermission(req, "ADMIN");
 
-    const { residentId } = create(req.params, ResidentId);
-    const { status } = create(req.body, UpdateStatusStruct);
+    const { residentId } = req.params;
+    const { status } = req.body;
     await this.authService.updateResidentStatus(residentId, status);
 
     res.status(200).json({ message: "작업이 성공적으로 완료되었습니다." });
@@ -155,12 +162,28 @@ export class AuthController {
    * 해당 아파트의 모든 대기 중인 주민 가입 상태를 일괄 변경 (admin 전용)
    * @route PATCH /api/auth/residents/status
    */
-  bulkUpdateResidentStatus = async (req: Request, res: Response) => {
+  bulkUpdateResidentStatus = async (req: Request<{}, {}, UpdateStatus>, res: Response) => {
     this.checkPermission(req, "ADMIN");
 
     const userId = req.user.id;
-    const { status } = create(req.body, UpdateStatusStruct);
+    const { status } = req.body;
     await this.authService.bulkUpdateResidentStatus(userId, status);
+
+    res.status(200).json({ message: "작업이 성공적으로 완료되었습니다." });
+  };
+
+  /**
+   * 특정 관리자의 정보(아파트명 등)를 수정 (SUPER_ADMIN 전용)
+   * @route PATCH /api/auth/admins/:adminId
+   * @param req - AdminId 파라미터와 UpdateAdminInfo 바디를 포함한 객체
+   */
+  updateAdminInfo = async (req: Request<AdminId, {}, UpdateAdminInfo>, res: Response) => {
+    this.checkPermission(req, "SUPER_ADMIN");
+
+    const { adminId } = req.params;
+    const updateData = req.body;
+
+    await this.authService.updateAdminInfo(adminId, updateData);
 
     res.status(200).json({ message: "작업이 성공적으로 완료되었습니다." });
   };
@@ -177,4 +200,39 @@ export class AuthController {
       throw new ForbiddenError("권한이 없습니다.");
     }
   }
+
+  /**
+   * 특정 관리자 계정을 삭제 (SUPER_ADMIN 전용)
+   * @route DELETE /api/auth/admins/:adminId
+   * @param req - 삭제할 관리자의 AdminId를 포함한 객체
+   */
+  deleteAdmin = async (req: Request<AdminId>, res: Response) => {
+    this.checkPermission(req, "SUPER_ADMIN");
+
+    const { adminId } = req.params;
+    await this.authService.deleteAdmin(adminId);
+
+    res.status(204).end();
+  };
+
+  /**
+   * 가입 거절된 계정 및 연관 데이터를 일괄 정리
+   * - SUPER_ADMIN: 거절된 관리자 계정 및 해당 아파트 정보 삭제
+   * - ADMIN: 본인 아파트의 거절된 주민 계정 삭제
+   * @route POST /api/auth/cleanup
+   */
+  cleanup = async (req: Request, res: Response) => {
+    const userRole = req.user.role;
+
+    if (userRole === "SUPER_ADMIN") {
+      await this.authService.adminClean();
+    } else if (userRole === "ADMIN") {
+      const adminId = req.user.id;
+      await this.authService.residentClean(adminId);
+    } else {
+      throw new ForbiddenError("작업을 수행할 권한이 없습니다.");
+    }
+
+    res.status(200).json({ message: "작업이 성공적으로 완료되었습니다." });
+  };
 }

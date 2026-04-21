@@ -4,30 +4,6 @@ import { getSkip } from "../utils/pagination.util";
 import type { ApartmentPublicQuery, ApartmentAdminQuery } from "../types/apartment.types";
 import type { CreateApartDto } from "../types/apart.type";
 
-//아파트 생성
-export const createApart = async (data: CreateApartDto, tx: Prisma.TransactionClient) => {
-  return await tx.apartment.create({
-    data: {
-      ...data,
-      boards: {
-        create: [
-          { name: "공지게시판", type: "NOTICE" },
-          { name: "투표게시판", type: "POLL" },
-          { name: "민원게시판", type: "COMPLAINT" },
-        ],
-      },
-    },
-  });
-};
-
-//아파트 이름으로 ID 조회
-export const getApartmentId = async (name: string) => {
-  return await prisma.apartment.findFirst({
-    where: { name },
-    select: { id: true },
-  });
-};
-
 //아파트 목록 조회
 export const findApartmentsPublic = async (filters: ApartmentPublicQuery) => {
   const { keyword, name, address } = filters;
@@ -68,9 +44,7 @@ export const findApartmentPublicById = async (id: string) => {
 };
 
 //관리자용 아파트 목록 조회
-export const findApartments = async (
-  filters: ApartmentAdminQuery & { page: number; limit: number }
-) => {
+export const findApartments = async (filters: ApartmentAdminQuery & { page: number; limit: number }) => {
   const { name, address, searchKeyword, apartmentStatus, page, limit } = filters;
 
   const where = {
@@ -102,7 +76,7 @@ export const findApartments = async (
   return { apartments, totalCount };
 };
 
-//관리자용 아파트 상세 조회      
+//관리자용 아파트 상세 조회
 export const findApartmentById = async (id: string) => {
   return prisma.apartment.findUnique({
     where: { id },
@@ -112,13 +86,54 @@ export const findApartmentById = async (id: string) => {
   });
 };
 
+export const deleteApartmentsById = async (ids: string[], tx: Prisma.TransactionClient) => {
+  await tx.apartment.deleteMany({
+    where: { id: { in: ids } },
+  });
+};
 
 export class ApartRepo {
+  // 아파트 생성
   createApart = async (data: CreateApartDto, tx: Prisma.TransactionClient) => {
-    return createApart(data, tx);
+    return await tx.apartment.create({
+      data: {
+        ...data,
+        boards: {
+          create: [
+            { name: "공지게시판", type: "NOTICE" },
+            { name: "투표게시판", type: "POLL" },
+            { name: "민원게시판", type: "COMPLAINT" },
+          ],
+        },
+      },
+    });
   };
 
+  //아파트 이름으로 ID 조회
   getApartmentId = async (name: string) => {
-    return getApartmentId(name);
+    return await prisma.apartment.findFirst({
+      where: { name },
+      select: { id: true },
+    });
+  };
+
+  // super-admin이 admin 정보 수정시 아파트 정보도 함께 수정
+  updateApartment = async (id: string, data: Prisma.ApartmentUpdateInput, tx: Prisma.TransactionClient) => {
+    await tx.apartment.update({
+      where: { id },
+      data,
+    });
+  };
+
+  // super-admin이 admin 삭제시 해당 admin이 관리중인 apart도 함께 삭제
+  deleteApart = async (id: string, tx: Prisma.TransactionClient) => {
+    await tx.apartment.delete({
+      where: { id },
+    });
+  };
+
+  // admin 승인 거절 계정 정리시 admin이 가입시 저장한 아파트 정보 함께 삭제(여러개)
+  deleteApartmentsById = async (ids: string[], tx: Prisma.TransactionClient) => {
+    await deleteApartmentsById(ids, tx);
   };
 }
