@@ -10,6 +10,7 @@ import userRouter from "./routes/user.route";
 import apartmentRouter from "./routes/apartment.routes";
 import { setupSwagger } from "./docs/swagger";
 import { errorHandler } from "./middlewares/errorHandler";
+import residentRoute from "./routes/residents.route";
 
 const env = getEnv();
 const app = express();
@@ -47,6 +48,8 @@ app.use("/api", dbRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 app.use("/api/apartments", apartmentRouter);
+app.use("/residents", residentRoute);
+
 app.use(errorHandler);
 
 app.use((_req: Request, res: Response) => {
