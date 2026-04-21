@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
 
 // Redis / BullMQ 실제 연결 차단
-jest.mock("../src/lib/redis", () => ({
+jest.unstable_mockModule("../src/lib/redis", () => ({
   redisPub: {
     publish: jest.fn().mockResolvedValue(1),
     xadd: jest.fn().mockResolvedValue("1-0"),
@@ -11,8 +11,9 @@ jest.mock("../src/lib/redis", () => ({
   redisQueueConnection: {},
 }));
 
-jest.mock("bullmq", () => ({
-  Queue: jest.fn().mockImplementation(() => ({
+jest.unstable_mockModule("../src/queue/notification.queue", () => ({
+  createNotificationQueue: jest.fn(),
+  getNotificationQueue: jest.fn().mockReturnValue({
     add: jest.fn().mockResolvedValue({}),
     getWaitingCount: jest.fn().mockResolvedValue(2),
     getActiveCount: jest.fn().mockResolvedValue(1),
@@ -20,24 +21,20 @@ jest.mock("bullmq", () => ({
     getFailedCount: jest.fn().mockResolvedValue(3),
     getDelayedCount: jest.fn().mockResolvedValue(0),
     getFailed: jest.fn().mockResolvedValue([]),
-  })),
-  Worker: jest.fn().mockImplementation(() => ({
-    on: jest.fn(),
-  })),
+  }),
 }));
 
-jest.mock("../src/routes/upload.route", () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const express = require("express");
-  return express.Router();
+jest.unstable_mockModule("../src/routes/upload.route", async () => {
+  const { default: express } = await import("express");
+  return { default: express.Router() };
 });
 
-jest.mock("../src/lib/s3", () => ({
+jest.unstable_mockModule("../src/lib/s3", () => ({
   s3: { send: jest.fn() },
 }));
 
-import request from "supertest";
-import app from "../src/app";
+const request = (await import("supertest")).default;
+const app = (await import("../src/app")).default;
 
 describe("Queue API", () => {
   describe("GET /api/queue/notifications/summary", () => {

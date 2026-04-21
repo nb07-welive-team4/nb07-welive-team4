@@ -5,22 +5,18 @@ const mockPublish = jest.fn<(...args: any[]) => any>();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockXadd = jest.fn<(...args: any[]) => any>();
 
-jest.unstable_mockModule("../src/lib/redis", () => ({
-  redisPub: {
-    publish: mockPublish,
-    xadd: mockXadd,
-    on: jest.fn(),
-  },
-  redisSub: { subscribe: jest.fn(), on: jest.fn() },
-  redisQueueConnection: {},
-}));
-
 jest.unstable_mockModule("../src/lib/logger", () => ({
   logger: { info: jest.fn(), error: jest.fn() },
 }));
 
-const { publishNotificationCreated } = await import(
+const { publishNotificationCreated, initNotificationRealtime } = await import(
   "../src/services/notification-realtime.service"
+);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+initNotificationRealtime(
+  { publish: mockPublish, xadd: mockXadd, on: jest.fn() } as any,
+  { subscribe: jest.fn(), on: jest.fn() } as any,
 );
 const {
   NOTIFICATION_CREATED_CHANNEL,

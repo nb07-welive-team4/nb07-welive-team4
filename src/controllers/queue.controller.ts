@@ -1,14 +1,15 @@
 import { Request, Response } from 'express';
-import { notificationQueue } from '../queue/notification.queue';
+import { getNotificationQueue } from '../queue/notification.queue';
 
 export async function getQueueSummary(_req: Request, res: Response) {
   try {
+    const queue = getNotificationQueue();
     const [waiting, active, completed, failed, delayed] = await Promise.all([
-      notificationQueue.getWaitingCount(),
-      notificationQueue.getActiveCount(),
-      notificationQueue.getCompletedCount(),
-      notificationQueue.getFailedCount(),
-      notificationQueue.getDelayedCount(),
+      queue.getWaitingCount(),
+      queue.getActiveCount(),
+      queue.getCompletedCount(),
+      queue.getFailedCount(),
+      queue.getDelayedCount(),
     ]);
 
     return res.status(200).json({ waiting, active, completed, failed, delayed });
@@ -19,7 +20,7 @@ export async function getQueueSummary(_req: Request, res: Response) {
 }
 
 export async function getRecentFailedJobs(_req: Request, res: Response) {
-  const jobs = await notificationQueue.getFailed(0, 19);
+  const jobs = await getNotificationQueue().getFailed(0, 19);
   const result = jobs.map((job) => ({
     id: job.id,
     name: job.name,

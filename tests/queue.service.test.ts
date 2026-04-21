@@ -4,9 +4,8 @@ import { jest } from "@jest/globals";
 const mockAdd = jest.fn<(...args: any[]) => any>();
 
 jest.unstable_mockModule("../src/queue/notification.queue", () => ({
-  notificationQueue: {
-    add: mockAdd,
-  },
+  createNotificationQueue: jest.fn(),
+  getNotificationQueue: jest.fn().mockReturnValue({ add: mockAdd }),
 }));
 
 jest.unstable_mockModule("../src/lib/logger", () => ({
