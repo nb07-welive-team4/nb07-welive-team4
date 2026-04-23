@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 process.env.JWT_SECRET = "test_secret_key_12345";
 process.env.JWT_ACCESS_SECRET = "your_super_secret_key_1";
 process.env.JWT_REFRESH_SECRET = "your_super_secret_key_2";

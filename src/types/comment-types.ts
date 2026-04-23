@@ -19,4 +19,8 @@ export interface CommentResponse {
   content: string;
   createdAt: Date;
   updatedAt: Date;
+  board: {
+    id: string;
+    boardType: BoardType;
+  };
 }

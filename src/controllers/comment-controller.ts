@@ -58,14 +58,14 @@ const deleteComment = async (
     const commentId = req.params["commentId"] as string;
     const requestUserId = req.user.id;
     const requestUserRole = req.user.role;
-
+ 
     await commentService.deleteComment(
       commentId,
       requestUserId,
       requestUserRole,
     );
-
-    res.status(204).send();
+ 
+    res.status(200).json({ message: "정상적으로 삭제 처리되었습니다" });
   } catch (err) {
     next(err);
   }
