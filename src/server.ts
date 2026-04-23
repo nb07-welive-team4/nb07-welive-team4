@@ -3,10 +3,57 @@ import { getEnv } from "./config/env";
 import { db } from "./lib/db";
 import app from "./app";
 import { startPollScheduler } from "./utils/poll.scheduler";
+import express from "express";
+import type { Request, Response } from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import commentRouter from "./routes/comment-route.js";
+import errorHandler from "./middlewares/error-handler.js";
+import authRouter from "./routes/auth.route.js";
 
 const env = getEnv();
 
 const server = app.listen(env.PORT, "0.0.0.0", () => {
+app.use(
+  cors({
+    origin: env.CORS_ORIGIN === "*" ? true : env.CORS_ORIGIN,
+  }),
+);
+
+app.use(express.json());
+app.use(cookieParser());
+
+// 댓글 라우터
+app.use("/api/comments", commentRouter);
+
+app.get("/health", (_req: Request, res: Response) => {
+  res.status(200).json({
+    ok: true,
+    service: "codequest-api",
+    env: env.NODE_ENV,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get("/api/ping", (_req: Request, res: Response) => {
+  res.status(200).json({
+    message: "pong",
+    success: true,
+  });
+});
+
+app.use("/api/auth", authRouter);
+
+app.use((_req: Request, res: Response) => {
+  res.status(404).json({
+    success: false,
+    message: "Not Found",
+  });
+});
+
+app.use(errorHandler);
+
+const server = app.listen(env.PORT, () => {
   console.log(`[BOOT] api is running on port ${env.PORT}`);
   startPollScheduler();
 });
