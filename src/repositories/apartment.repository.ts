@@ -67,7 +67,7 @@ export const findApartments = async (filters: ApartmentAdminQuery & { page: numb
       skip: getSkip(page, limit),
       take: limit,
       include: {
-        admin: { select: { name: true, contact: true, email: true } },
+        admin: { select: { id: true, name: true, contact: true, email: true } },
       },
     }),
     prisma.apartment.count({ where }),
@@ -81,7 +81,7 @@ export const findApartmentById = async (id: string) => {
   return prisma.apartment.findUnique({
     where: { id },
     include: {
-      admin: { select: { name: true, contact: true, email: true } },
+      admin: { select: { id: true, name: true, contact: true, email: true } },
     },
   });
 };
