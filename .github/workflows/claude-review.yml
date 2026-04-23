@@ -3,9 +3,7 @@ name: Claude PR Review & Bug Detection
 on:
   workflow_dispatch:
   pull_request:
-    branches:
-      - develop
-      - main
+    types: [opened, synchronize]
 
 jobs:
   claude-review:
@@ -32,6 +30,7 @@ jobs:
             - Potential bugs or issues
             - Security implications
             - Performance considerations
+            - Write a comment in Korean
 
             Note: The PR branch is already checked out in the current working directory.
 
