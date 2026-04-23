@@ -1,11 +1,8 @@
 name: Claude PR Review & Bug Detection
 
 on:
-  workflow_dispatch:
   pull_request:
-    branches:
-      - develop
-      - main
+    types: [opened, synchronize, reopened]
 
 jobs:
   claude-review:
