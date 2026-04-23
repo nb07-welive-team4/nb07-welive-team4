@@ -1,9 +1,8 @@
 name: Claude PR Review & Bug Detection
 
 on:
-  workflow_dispatch:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, reopened]
 
 jobs:
   claude-review:
@@ -11,12 +10,14 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      id-token: write
       issues: write
 
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - uses: anthropics/claude-code-action@v1
         with:
@@ -30,7 +31,6 @@ jobs:
             - Potential bugs or issues
             - Security implications
             - Performance considerations
-            - Write a comment in Korean
 
             Note: The PR branch is already checked out in the current working directory.
 
