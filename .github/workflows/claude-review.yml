@@ -17,6 +17,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - uses: anthropics/claude-code-action@v1
         with:
