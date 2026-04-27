@@ -59,7 +59,7 @@ export class LoginResponseDto {
     let targetApartment = null;
 
     if (user.role === "ADMIN") {
-      targetApartment = user.managedApartment;
+      targetApartment = Array.isArray(user.managedApartment) ? user.managedApartment[0] : user.managedApartment;
       this.residentDong = null; // 어드민은 동 정보가 없음
     } else if (user.role === "USER") {
       targetApartment = user.resident?.apartment || null;
@@ -70,10 +70,10 @@ export class LoginResponseDto {
     }
 
     // 아파트 및 게시판 정보 매핑
-    this.apartmentId = targetApartment?.id || null;
+    this.apartmentId = user.apartmentId || targetApartment?.id || null;
     this.apartmentName = targetApartment?.name || null;
 
-    const boards = targetApartment?.boards || [];
+    const boards: { id: string; type: string }[] = targetApartment?.boards || [];
     this.boardIds = {
       COMPLAINT: boards.find((b) => b.type === "COMPLAINT")?.id || "",
       NOTICE: boards.find((b) => b.type === "NOTICE")?.id || "",

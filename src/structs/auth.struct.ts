@@ -28,22 +28,27 @@ export const UserStruct = object({
 });
 
 // admin 필드
-export const AdminStruct = object({
-  ...commonFields,
-  role: enums(["ADMIN"]),
-  description: size(string(), 0, 1000),
-  startComplexNumber: ShortString,
-  endComplexNumber: ShortString,
-  startDongNumber: ShortString,
-  endDongNumber: ShortString,
-  startFloorNumber: ShortString,
-  endFloorNumber: ShortString,
-  startHoNumber: ShortString,
-  endHoNumber: ShortString,
-  apartmentName: MediumString,
-  apartmentAddress: LongString,
-  apartmentManagementNumber: pattern(string(), /^\d{7,15}$/),
-});
+export const AdminStruct = refine(
+  object({
+    ...commonFields,
+    passwordConfirm: size(string(), 8, 20),
+    role: enums(["ADMIN"]),
+    description: size(string(), 0, 1000),
+    startComplexNumber: ShortString,
+    endComplexNumber: ShortString,
+    startDongNumber: ShortString,
+    endDongNumber: ShortString,
+    startFloorNumber: ShortString,
+    endFloorNumber: ShortString,
+    startHoNumber: ShortString,
+    endHoNumber: ShortString,
+    apartmentName: MediumString,
+    apartmentAddress: LongString,
+    apartmentManagementNumber: pattern(string(), /^\d{7,15}$/),
+  }),
+  "PasswordMatch",
+  (data) => data.password === data.passwordConfirm || "비밀번호가 일치하지 않습니다.",
+);
 
 // super-admin 필드
 export const SuperAdminStruct = object({

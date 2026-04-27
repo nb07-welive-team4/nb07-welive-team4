@@ -1,7 +1,7 @@
 import { JwtPayload } from "jsonwebtoken";
 
 export type UserRole = "USER" | "ADMIN" | "SUPER_ADMIN";
-type JoinStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type Status = "PENDING" | "APPROVED" | "REJECTED";
 
 export interface CreateUserDTO {
   username: string;
@@ -15,7 +15,7 @@ export interface CreateUserDTO {
   apartmentDong?: string;
   apartmentHo?: string;
   residentId?: string;
-  joinStatus?: JoinStatus;
+  joinStatus?: Status;
 }
 
 export interface AuthTokenPayload extends JwtPayload {

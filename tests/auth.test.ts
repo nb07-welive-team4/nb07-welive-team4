@@ -197,7 +197,7 @@ describe("Auth 도메인 통합 테스트", () => {
   });
 
   describe("PATCH /api/auth/admins/:adminId/status", () => {
-    it("super-admin은 admin의 가입을 승인할 수 있어야 한다.", async () => {
+    it("super-admin은 admin의 가입을 승인할 수 있고 아파트 상태도 APPROVED로 변경되어야 한다.", async () => {
       const targetId = adminIds[0];
       const res = await request(app)
         .patch(`/api/auth/admins/${targetId}/status`)
@@ -208,13 +208,15 @@ describe("Auth 도메인 통합 테스트", () => {
 
       const updatedUser = await prisma.user.findUnique({
         where: { id: targetId! },
+        include: { managedApartment: true },
       });
       expect(updatedUser?.joinStatus).toBe("APPROVED");
+      expect(updatedUser?.managedApartment?.apartmentStatus).toBe("APPROVED");
     });
   });
 
   describe("PATCH /api/auth/admins/status", () => {
-    it("super-admin은 PENDING 상태인 어드민을 전부 가입 승인할 수 있어야 한다.", async () => {
+    it("super-admin은 PENDING 상태인 어드민을 전부 가입 승인할 수 있고 해당 아파트들도 APPROVED로 변경되어야 한다.", async () => {
       const pendingCountBefore = await prisma.user.count({
         where: { role: "ADMIN", joinStatus: "PENDING" },
       });
@@ -229,10 +231,14 @@ describe("Auth 도메인 통합 테스트", () => {
 
       const approvedAdmins = await prisma.user.findMany({
         where: { role: "ADMIN" },
+        include: { managedApartment: true },
       });
 
       approvedAdmins.forEach((admin) => {
         expect(admin.joinStatus).toBe("APPROVED");
+        if (admin.managedApartment) {
+          expect(admin.managedApartment.apartmentStatus).toBe("APPROVED");
+        }
       });
     });
   });

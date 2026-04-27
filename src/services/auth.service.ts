@@ -4,6 +4,7 @@ import { ApartRepo } from "../repositories/apartment.repository";
 import { ResidentsRepo } from "../repositories/residents.repository";
 import { BadRequestError, NotFoundError, UnauthorizedError, ConflictError } from "../errors/errors";
 import { LoginResponseDto } from "../models/auth.model";
+import { Status } from "../types/auth.type";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { verifyToken, expiresIn14Days } from "../utils/auth.utill";
@@ -62,11 +63,13 @@ export class AuthService {
       } else {
         resident = await this.residentsRepo.createResident(
           {
+            apartmentId,
             building: data.apartmentDong,
             unitNumber: data.apartmentHo,
             contact: data.contact,
             name: data.name,
             isHouseholder: "HOUSEHOLDER",
+            residenceStatus: "RESIDENCE",
           },
           apartmentId,
           isRegistered,
@@ -129,6 +132,10 @@ export class AuthService {
         },
         tx,
       );
+
+      // 생성된 관리자(User)를 아파트의 admin(adminId)에 연결하여 참조 무결성 확보
+      await this.apartRepo.updateApartment(apartment.id, { admin: { connect: { id: admin.id } } }, tx);
+
       return admin;
     });
   };
@@ -136,8 +143,11 @@ export class AuthService {
   createSuperAdmin = async (data: CreateSuperAdmin) => {
     const hashedPassword = await this.prepareRegistration(data);
 
+    // Prisma 저장을 위해 DB 스키마에 없는 passwordConfirm 필드를 제거
+    const superAdminData = data;
+
     const superAdmin = await this.authRepo.createUser({
-      ...data,
+      ...superAdminData,
       password: hashedPassword,
       role: "SUPER_ADMIN",
       joinStatus: "APPROVED",
@@ -169,12 +179,13 @@ export class AuthService {
       throw new UnauthorizedError("관리자에 의해 가입이 거절된 계정입니다.");
     }
 
-    let apartmentId: string | null = null;
+    let apartmentId: string | null = user.apartmentId || null;
 
     if (user.role === "ADMIN") {
-      apartmentId = user.managedApartment?.id || null;
+      const managedApt = Array.isArray(user.managedApartment) ? user.managedApartment[0] : user.managedApartment;
+      apartmentId = apartmentId || managedApt?.id || null;
     } else if (user.role === "USER") {
-      apartmentId = user.resident?.apartmentId || null;
+      apartmentId = apartmentId || user.resident?.apartmentId || null;
     }
 
     // 토큰 발급 및 기존 토큰 정리
@@ -206,7 +217,10 @@ export class AuthService {
 
     const user = savedToken.user;
 
-    return await this.rotateTokens(user);
+    return await this.rotateTokens({
+      ...user,
+      apartmentId: user.apartmentId ?? undefined,
+    });
   };
 
   /**
@@ -214,12 +228,12 @@ export class AuthService {
    * @param userId - 로그아웃을 시도하는 유저 ID
    * @param refreshToken - 무효화할 특정 리프레시 토큰
    */
-  logout = async (userId: string, refreshToken: string): Promise<void> => {
-    const isDeleted = await this.authRepo.deleteRefreshTokens(userId, refreshToken);
+  logout = async (userId: string, refreshToken?: string): Promise<void> => {
+    // refreshToken이 없는 경우, Prisma의 undefined 무시 현상으로 인한 전체 세션 삭제를 방지하고
+    // 이미 세션이 없는 것과 같으므로 바로 종료합니다.
+    if (!refreshToken) return;
 
-    if (!isDeleted) {
-      throw new UnauthorizedError("이미 로그아웃되었거나 유효하지 않은 세션입니다.");
-    }
+    await this.authRepo.deleteRefreshTokens(userId, refreshToken);
   };
 
   /**
@@ -227,8 +241,27 @@ export class AuthService {
    * @param adminId - 상태를 변경할 관리자의 ID
    * @param status - 변경할 상태 (APPROVED/REJECTED)
    */
-  updateAdminStatus = async (adminId: string, status: JoinStatus) => {
-    await this.validateAndUpdateStatus(adminId, status, "ADMIN");
+  updateAdminStatus = async (adminId: string, status: Status) => {
+    return await prisma.$transaction(async (tx) => {
+      const admin = await this.authRepo.findById(adminId, tx);
+      if (!admin) throw new NotFoundError("해당 사용자를 찾을 수 없습니다.");
+      if (admin.role !== "ADMIN") {
+        throw new BadRequestError("해당 사용자의 상태를 변경할 수 없습니다.");
+      }
+
+      // 상태가 같더라도 User와 Apartment의 상태가 불일치(Out of sync)할 수 있으므로,
+      // 조기 리턴을 제거하고 강제로 양쪽 테이블의 상태를 동기화(Update)시킵니다.
+
+      const updateUser = await this.authRepo.updateUserStatus(adminId, status, tx);
+
+      const apartmentId = admin.apartmentId;
+      if (apartmentId) {
+        await this.apartRepo.updateApartmentStatus(apartmentId, status, tx);
+      }
+
+      // 아파트 상태 변경 결과도 클라이언트에서 알 수 있도록 반환 데이터를 보완
+      return { ...updateUser, apartmentStatus: apartmentId ? status : undefined };
+    });
   };
 
   /**
@@ -237,15 +270,34 @@ export class AuthService {
    * @param status - 변경할 상태 (APPROVED/REJECTED)
    */
   updateResidentStatus = async (residentId: string, status: JoinStatus) => {
-    await this.validateAndUpdateStatus(residentId, status, "USER");
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [{ id: residentId }, { residentId: residentId }],
+      },
+    });
+
+    if (!user) throw new NotFoundError("해당 사용자를 찾을 수 없습니다.");
+    if (user.role !== "USER") {
+      throw new BadRequestError("해당 사용자의 상태를 변경할 수 없습니다.");
+    }
+    if (user.joinStatus === status) return;
+
+    await this.authRepo.updateUserStatus(user.id, status);
   };
 
   /**
    * 가입 대기 중인 모든 관리자(ADMIN)의 상태를 일괄 변경
    * @param status - 변경할 상태 (APPROVED/REJECTED)
    */
-  bulkUpdateAdminStatus = async (status: JoinStatus) => {
-    await this.authRepo.bulkUpdateAdminStatus(status);
+  bulkUpdateAdminStatus = async (status: Status) => {
+    await prisma.$transaction(async (tx) => {
+      const apartmentIds = await this.authRepo.getPendingAdminApartmentIds(tx);
+
+      await this.authRepo.bulkUpdateAdminStatus(status, tx);
+      if (apartmentIds.length > 0) {
+        await this.apartRepo.bulkUpdateApartmentStatus(apartmentIds, status, tx);
+      }
+    });
   };
 
   /**
@@ -256,7 +308,7 @@ export class AuthService {
    */
   bulkUpdateResidentStatus = async (userId: string, status: JoinStatus) => {
     const admin = await this.authRepo.findById(userId);
-    const apartmentId = admin?.managedApartment?.id;
+    const apartmentId = admin?.apartmentId;
 
     if (!admin || !apartmentId) {
       throw new NotFoundError("관리 중인 아파트 정보가 존재하지 않습니다.");
@@ -275,7 +327,7 @@ export class AuthService {
   updateAdminInfo = async (adminId: string, data: UpdateAdminInfo) => {
     const admin = await this.getAdminOrThrow(adminId);
 
-    const apartmentId = admin.managedApartment?.id;
+    const apartmentId = admin.apartmentId;
     const { apartmentName, apartmentAddress, apartmentManagementNumber, description, ...adminFields } = data;
     const isApartmentUpdateField = !!(apartmentName || apartmentAddress || apartmentManagementNumber || description);
     if (isApartmentUpdateField && !apartmentId) {
@@ -312,7 +364,7 @@ export class AuthService {
   deleteAdmin = async (adminId: string) => {
     const admin = await this.getAdminOrThrow(adminId);
 
-    const apartmentId = admin.managedApartment?.id;
+    const apartmentId = admin.apartmentId;
     if (!apartmentId) {
       throw new BadRequestError("어드민과 연결된 아파트 정보가 없습니다.");
     }
@@ -333,7 +385,7 @@ export class AuthService {
     if (rejectedAdmins.length === 0) return;
 
     const adminIds = rejectedAdmins.map((a) => a.id);
-    const apartmentIds = rejectedAdmins.map((a) => a.managedApartment?.id).filter((id): id is string => !!id);
+    const apartmentIds = rejectedAdmins.map((a) => a.apartmentId).filter((id): id is string => !!id);
 
     await prisma.$transaction(async (tx) => {
       await this.authRepo.adminClean(adminIds, tx);
@@ -351,7 +403,7 @@ export class AuthService {
   residentClean = async (adminId: string) => {
     const admin = await this.getAdminOrThrow(adminId);
 
-    const apartmentId = admin.managedApartment?.id;
+    const apartmentId = admin.apartmentId;
     if (!apartmentId) {
       throw new BadRequestError("어드민과 연결된 아파트 정보가 없습니다.");
     }
@@ -368,27 +420,6 @@ export class AuthService {
     if (!admin) throw new NotFoundError("해당 어드민을 찾을 수 없습니다.");
 
     return admin;
-  }
-
-  /**
-   * 특정 사용자의 존재 여부, 역할(Role), 현재 상태를 검증한 후 상태를 업데이트
-   * @param id - 사용자 ID
-   * @param status - 변경하려는 목적 상태
-   * @param targetRole - 해당 API가 타겟팅하는 역할 (ADMIN 또는 USER)
-   * @throws {NotFoundError} 사용자가 존재하지 않을 경우
-   * @throws {BadRequestError} 사용자의 역할이 타겟 역할과 일치하지 않을 경우
-   * @private
-   */
-  private async validateAndUpdateStatus(id: string, status: JoinStatus, targetRole: "ADMIN" | "USER") {
-    const user = await this.authRepo.findById(id);
-    if (!user) throw new NotFoundError("해당 사용자를 찾을 수 없습니다.");
-
-    if (user.role !== targetRole) {
-      throw new BadRequestError("해당 사용자의 상태를 변경할 수 없습니다.");
-    }
-    if (user.joinStatus === status) return;
-
-    await this.authRepo.updateUserStatus(id, status);
   }
 
   /**

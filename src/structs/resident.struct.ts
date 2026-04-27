@@ -1,26 +1,27 @@
-import { boolean, enums, number, object, optional, size, string, coerce, defaulted, Infer, pattern } from "superstruct";
+import { enums, object, optional, size, string, Infer, pattern } from "superstruct";
 
-const NumericString = coerce(number(), string(), (value) => Number(value));
-const BooleanString = coerce(boolean(), string(), (value) => value === "true");
 const Contact = pattern(string(), /^010\d{8}$/);
 
 // string 길이별
 const ShortString = size(string(), 1, 20);
 
 export const GetResidentsStruct = object({
-  page: optional(NumericString),
-  limit: optional(size(NumericString, 1, 100)),
+  page: optional(pattern(string(), /^\d+$/)),
+  limit: optional(pattern(string(), /^\d+$/)),
   building: optional(string()),
   unitNumber: optional(string()),
   residenceStatus: optional(enums(["RESIDENCE", "NO_RESIDENCE"])),
-  isRegistered: optional(BooleanString),
+  isRegistered: optional(enums(["true", "false"])),
   keyword: optional(size(string(), 2, 100)),
 });
 
 export const CreateResidentStruct = object({
+  apartmentId: optional(string()),
+  approvalStatus: optional(enums(["APPROVED", "REJECTED", "PENDING"])),
   building: ShortString,
   unitNumber: ShortString,
   contact: Contact,
+  residenceStatus: optional(enums(["RESIDENCE", "NO_RESIDENCE"])),
   name: ShortString,
   isHouseholder: enums(["HOUSEHOLDER", "MEMBER"]),
 });

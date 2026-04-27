@@ -19,7 +19,7 @@ export class ResidentResponseDto {
 
   constructor(resident: ResidentWithUser) {
     this.id = resident.id;
-    this.userId = resident.user?.username ?? null;
+    this.userId = resident.user?.id ?? null;
     this.building = resident.building;
     this.unitNumber = resident.unitNumber;
     this.contact = resident.contact;
@@ -28,7 +28,7 @@ export class ResidentResponseDto {
     this.residenceStatus = resident.residenceStatus;
     this.isHouseholder = resident.isHouseholder;
 
-    this.isRegistered = resident.user?.joinStatus === "APPROVED";
+    this.isRegistered = resident.isRegistered;
     this.approvalStatus = resident.user?.joinStatus ?? "NOT_REGISTERED";
   }
 }

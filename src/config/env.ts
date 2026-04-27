@@ -1,7 +1,3 @@
-
-
-
-
 export interface Env {
   NODE_ENV: string;
   PORT: number;
@@ -23,7 +19,7 @@ export function getEnv(): Env {
 }
 
 export const env = {
-  REDIS_URL: process.env.REDIS_URL ?? '',
-  PORT: process.env.PORT ?? '4000',
-  NODE_ENV: process.env.NODE_ENV ?? 'development',
-}
+  REDIS_URL: process.env.REDIS_URL || "redis://host.docker.internal:6379",
+  PORT: process.env.PORT ?? "4000",
+  NODE_ENV: process.env.NODE_ENV ?? "development",
+};

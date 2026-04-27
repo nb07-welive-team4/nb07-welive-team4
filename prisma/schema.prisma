@@ -110,7 +110,7 @@ enum ApartMentStatus {
 
 model Apartment {
   id                 String          @id @default(uuid())
-  name               String
+  name               String          @unique
   address            String
   officeNumber       String
   description        String

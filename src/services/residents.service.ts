@@ -14,7 +14,8 @@ export class ResidentsService {
   private userRepo = new UserRepo();
 
   getResidents = async (queryData: GetResidentsQuery, apartmentId: string) => {
-    const { page = 1, limit = 20 } = queryData;
+    const page = queryData.page ? Number(queryData.page) : 1;
+    const limit = queryData.limit ? Number(queryData.limit) : 20;
     const take = limit;
     const skip = (page - 1) * limit;
 
@@ -30,7 +31,17 @@ export class ResidentsService {
     const user = await this.userRepo.findByNameAndContact(residentData.name, residentData.contact);
 
     const isRegistered = !!user;
-    const resident = await this.residentsRepo.createResident(residentData, apartmentId, isRegistered);
+
+    // Prisma 에러 방지를 위해 DB에 필요한 필드만 추출
+    const cleanData = {
+      building: residentData.building,
+      unitNumber: residentData.unitNumber,
+      name: residentData.name,
+      contact: residentData.contact,
+      isHouseholder: residentData.isHouseholder,
+      ...(residentData.residenceStatus !== undefined && { residenceStatus: residentData.residenceStatus }),
+    };
+    const resident = await this.residentsRepo.createResident(cleanData, apartmentId, isRegistered);
 
     const result = new ResidentResponseDto({ ...resident, user: user || null });
     return result;
@@ -120,7 +131,8 @@ export class ResidentsService {
   downloadResidentsAsCsv = async (apartmentId: string, queryData: GetResidentsQuery) => {
     const where = this.residentWhereInputFromQuery(apartmentId, queryData);
 
-    const { page = 1, limit = 10000 } = queryData;
+    const page = queryData.page ? Number(queryData.page) : 1;
+    const limit = queryData.limit ? Number(queryData.limit) : 10000;
     const take = limit;
     const skip = (page - 1) * limit;
 
@@ -154,10 +166,10 @@ export class ResidentsService {
     if (residenceStatus) andConditions.push({ residenceStatus });
 
     if (isRegistered !== undefined) {
-      if (isRegistered) {
-        andConditions.push({ user: { joinStatus: "APPROVED" } });
+      if (isRegistered === "true") {
+        andConditions.push({ isRegistered: true });
       } else {
-        andConditions.push({ OR: [{ user: null }, { user: { joinStatus: { in: ["PENDING", "REJECTED"] } } }] });
+        andConditions.push({ isRegistered: false });
       }
     }
 
