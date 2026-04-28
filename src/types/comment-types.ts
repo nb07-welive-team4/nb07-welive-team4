@@ -8,8 +8,6 @@ export interface CreateCommentBody {
 
 export interface UpdateCommentBody {
   content: string;
-  boardId: string;
-  boardType: BoardType;
 }
 
 export interface CommentResponse {

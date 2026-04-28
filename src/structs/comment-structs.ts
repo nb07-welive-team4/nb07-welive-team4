@@ -10,6 +10,4 @@ export const CreateCommentStruct = object({
 
 export const UpdateCommentStruct = object({
   content: string(),
-  boardId: string(),
-  boardType: enums(boardTypeValues),
 });

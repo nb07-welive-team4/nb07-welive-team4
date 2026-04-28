@@ -1,5 +1,5 @@
 import prisma from "../lib/prisma.js";
-import { CreateCommentBody, UpdateCommentBody } from "../types/comment-types.js";
+import { CreateCommentBody } from "../types/comment-types.js";
 
 // 댓글 단건 조회
 const findCommentById = async (commentId: string) => {
@@ -23,10 +23,10 @@ const createComment = async (authorId: string, body: CreateCommentBody) => {
 };
 
 // 댓글 수정
-const updateComment = async (commentId: string, body: UpdateCommentBody) => {
+const updateComment = async (commentId: string, content: string) => {
   return prisma.comment.update({
     where: { id: commentId },
-    data: { content: body.content },
+    data: { content },
     include: { author: { select: { id: true, name: true } } },
   });
 };

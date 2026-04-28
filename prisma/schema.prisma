@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -39,11 +37,6 @@ model User {
 
   // 계정 활성화 여부
   isActive          Boolean  @default(true)
-
-  // 일반 유저용 정보
-  apartmentName     String?
-  apartmentDong     String? 
-  apartmentHo       String?
 
   // 유저 전용 필드
   apartmentName     String?  // 아파트 이름 (가입 시 입력)
@@ -267,15 +260,14 @@ model Notification {
 }
 
 model Notice {
-  id          String   @id @default(uuid())
+  id          String         @id @default(uuid())
   category    NoticeCategory
   title       String
   content     String
-  isPinned    Boolean  @default(false)
+  isPinned    Boolean        @default(false)
   startDate   DateTime?
   endDate     DateTime?
 
-  // 관계 설정
   boardId     String
   board       Board    @relation(fields: [boardId], references: [id])
   authorId    String
@@ -286,12 +278,12 @@ model Notice {
 }
 
 model Comment {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   content     String
   boardId     String
   boardType   BoardType
   authorId    String
-  author      User      @relation("UserComments", fields: [authorId], references: [id])
+  author      User      @relation("UserComments", fields: [authorId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }

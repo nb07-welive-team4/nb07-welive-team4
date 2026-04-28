@@ -87,17 +87,22 @@ describe("Comment 도메인 통합 테스트", () => {
   let createdCommentId: string;
 
   beforeAll(async () => {
-    // DB 초기화
-    await prisma.comment.deleteMany();
-    await prisma.vote.deleteMany();
-    await prisma.pollOption.deleteMany();
-    await prisma.poll.deleteMany();
-    await prisma.complaint.deleteMany();
-    await prisma.notice.deleteMany();
-    await prisma.board.deleteMany();
-    await prisma.refreshToken.deleteMany();
-    await prisma.apartment.deleteMany();
-    await prisma.user.deleteMany();
+    // DB 초기화 - comment 테스트 관련 데이터만 정리
+    await prisma.comment.deleteMany({
+      where: { author: { username: { startsWith: "comment_" } } },
+    });
+    await prisma.refreshToken.deleteMany({
+      where: { user: { username: { startsWith: "comment_" } } },
+    });
+    await prisma.user.deleteMany({
+      where: { username: { startsWith: "comment_" } },
+    });
+    await prisma.board.deleteMany({
+      where: { apartment: { name: "댓글테스트아파트" } },
+    });
+    await prisma.apartment.deleteMany({
+      where: { name: "댓글테스트아파트" },
+    });
 
     // 슈퍼어드민 생성
     await request(app).post("/api/auth/signup/super-admin").send(superAdminPayload);
@@ -280,8 +285,6 @@ describe("Comment 도메인 통합 테스트", () => {
         .set("Cookie", userCookie)
         .send({
           content: "수정된 댓글입니다.",
-          boardType: "COMPLAINT",
-          boardId,
         });
 
       expect(res.status).toBe(200);
@@ -301,8 +304,6 @@ describe("Comment 도메인 통합 테스트", () => {
         .set("Cookie", user2Cookie)
         .send({
           content: "남의 댓글 수정 시도",
-          boardType: "COMPLAINT",
-          boardId,
         });
 
       expect(res.status).toBe(403);
@@ -314,8 +315,6 @@ describe("Comment 도메인 통합 테스트", () => {
         .set("Cookie", userCookie)
         .send({
           content: "없는 댓글 수정",
-          boardType: "COMPLAINT",
-          boardId,
         });
 
       expect(res.status).toBe(404);

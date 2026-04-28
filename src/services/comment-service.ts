@@ -5,9 +5,15 @@ import {
   CommentResponse,
 } from "../types/comment-types.js";
 import { NotFoundError, ForbiddenError } from "../errors/errors.js";
+import { Prisma } from "@prisma/client";
+
+// Prisma 반환 타입 별칭
+type CommentWithAuthor = Prisma.CommentGetPayload<{
+  include: { author: { select: { id: true; name: true } } };
+}>;
 
 // 응답 포맷 정제
-const formatComment = (comment: any): CommentResponse => ({
+const formatComment = (comment: CommentWithAuthor): CommentResponse => ({
   id: comment.id,
   userId: comment.authorId,
   writerName: comment.author?.name ?? "",
@@ -16,7 +22,7 @@ const formatComment = (comment: any): CommentResponse => ({
   updatedAt: comment.updatedAt,
   board: {
     id: comment.boardId,
-    boardType: comment.boardType,
+    boardType: comment.boardType as CommentResponse["board"]["boardType"],
   },
 });
 
@@ -41,7 +47,7 @@ const updateComment = async (
   if (comment.authorId !== requestUserId)
     throw new ForbiddenError("본인 댓글만 수정할 수 있습니다.");
 
-  const updated = await commentRepository.updateComment(commentId, body);
+  const updated = await commentRepository.updateComment(commentId, body.content);
   return { comment: formatComment(updated) };
 };
 
