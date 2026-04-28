@@ -1,10 +1,11 @@
+import prisma from "../lib/prisma.js";
 import { commentRepository } from "../repositories/comment-repository.js";
 import {
   CreateCommentBody,
   UpdateCommentBody,
   CommentResponse,
 } from "../types/comment-types.js";
-import { NotFoundError, ForbiddenError } from "../errors/errors.js";
+import { NotFoundError, ForbiddenError, BadRequestError } from "../errors/errors.js";
 import { Prisma } from "@prisma/client";
 
 // Prisma 반환 타입 별칭
@@ -31,6 +32,11 @@ const createComment = async (
   authorId: string,
   body: CreateCommentBody,
 ): Promise<{ comment: CommentResponse }> => {
+
+  const board = await prisma.board.findUnique({ where: { id: body.boardId } });
+  if (!board) throw new NotFoundError("게시판을 찾을 수 없습니다.");
+  if (board.type !== body.boardType) throw new BadRequestError("boardType이 실제 게시판 유형과 일치하지 않습니다.");
+  
   const comment = await commentRepository.createComment(authorId, body);
   return { comment: formatComment(comment) };
 };
