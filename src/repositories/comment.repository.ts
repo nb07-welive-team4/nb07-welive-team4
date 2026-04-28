@@ -1,5 +1,12 @@
 import prisma from "../lib/prisma.js";
-import { CreateCommentBody } from "../types/comment-types.js";
+import { CreateCommentBody } from "../types/comment.types.js";
+
+// 게시판 단건 조회
+const findBoardById = async (boardId: string) => {
+  return prisma.board.findUnique({
+    where: { id: boardId },
+  });
+};
 
 // 댓글 단건 조회
 const findCommentById = async (commentId: string) => {
@@ -39,6 +46,7 @@ const deleteComment = async (commentId: string) => {
 };
 
 export const commentRepository = {
+  findBoardById,
   findCommentById,
   createComment,
   updateComment,

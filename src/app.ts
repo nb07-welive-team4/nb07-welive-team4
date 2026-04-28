@@ -12,7 +12,7 @@ import notificationRouter from "./routes/notification.route";
 import queueRouter from "./routes/queue.route";
 import pollRouter from "./routes/poll.routes";
 import optionRouter from "./routes/option.routes";
-import commentRouter from "./routes/comment-route";
+import commentRouter from "./routes/comment.route";
 import { setupSwagger } from "./docs/swagger";
 import { errorHandler } from "./middlewares/errorHandler";
 import residentRoute from "./routes/residents.route";

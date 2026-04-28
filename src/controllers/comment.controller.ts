@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { assert } from "superstruct";
-import { commentService } from "../services/comment-service.js";
+import { commentService } from "../services/comment.service.js";
 import {
   CreateCommentStruct,
   UpdateCommentStruct,
-} from "../structs/comment-structs.js";
+} from "../structs/comment.structs.js";
 
 // POST /api/comments
 const createComment = async (
