@@ -154,7 +154,7 @@ export class ResidentsService {
     apartmentId: string,
     queryData: GetResidentsQuery,
   ): Prisma.ResidentWhereInput => {
-    const { building, unitNumber, residenceStatus, isRegistered, keyword } = queryData;
+    const { building, unitNumber, residenceStatus, isRegistered, keyword, isHouseholder } = queryData;
     const where: Prisma.ResidentWhereInput = {
       apartmentId: apartmentId,
     };
@@ -164,6 +164,7 @@ export class ResidentsService {
     if (building) andConditions.push({ building });
     if (unitNumber) andConditions.push({ unitNumber });
     if (residenceStatus) andConditions.push({ residenceStatus });
+    if (isHouseholder) andConditions.push({ isHouseholder });
 
     if (isRegistered !== undefined) {
       if (isRegistered === "true") {

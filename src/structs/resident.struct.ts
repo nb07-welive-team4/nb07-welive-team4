@@ -12,6 +12,7 @@ export const GetResidentsStruct = object({
   unitNumber: optional(string()),
   residenceStatus: optional(enums(["RESIDENCE", "NO_RESIDENCE"])),
   isRegistered: optional(enums(["true", "false"])),
+  isHouseholder: optional(enums(["HOUSEHOLDER", "MEMBER"])),
   keyword: optional(size(string(), 2, 100)),
 });
 
