@@ -14,6 +14,7 @@ import pollRouter from "./routes/poll.routes";
 import optionRouter from "./routes/option.routes";
 import commentRouter from "./routes/comment.route";
 import complaintRouter from "./routes/complaint.route";
+import eventRouter from "./routes/event.route";
 import { setupSwagger } from "./docs/swagger";
 import { errorHandler } from "./middlewares/errorHandler";
 import residentRoute from "./routes/residents.route";
@@ -61,6 +62,7 @@ app.use("/api/polls", pollRouter);
 app.use("/api/options", optionRouter);
 app.use("/api/comments", commentRouter);
 app.use("/api/complaints", complaintRouter);
+app.use("/api/event", eventRouter);
 
 app.get("/api/poll-scheduler/ping", (_req, res) => {
   res.status(200).json({ message: "Poll scheduler is running." });
