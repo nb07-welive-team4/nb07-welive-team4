@@ -48,6 +48,8 @@ model User {
   residentId    String?   @unique
   resident      Resident? @relation(fields: [residentId], references: [id], onDelete: SetNull)
 
+  comments  Comment[] @relation("UserComments")
+
   refreshTokens RefreshToken[]
   complaints    Complaint[]    @relation("UserComplaints")
   polls         Poll[]         @relation("UserPolls")
@@ -170,8 +172,21 @@ model Complaint {
   authorId String
   author   User   @relation("UserComplaints", fields: [authorId], references: [id])
 
+  status        ComplaintStatus @default(PENDING)
+  viewsCount    Int             @default(0)
+  commentsCount Int             @default(0)
+  dong          String          @default("")
+  ho            String          @default("")
+  comments      Comment[]       @relation("ComplaintComments")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum ComplaintStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
 }
 
 enum PollStatus {
@@ -237,6 +252,7 @@ enum NoticeCategory {
 
 enum NotificationType {
   COMPLAINT_RESOLVED
+  COMPLAINT_CREATED
   NOTICE_CREATED
   POLL_CREATED
 }
@@ -274,4 +290,19 @@ model Notice {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  content   String
+  boardId   String
+  boardType BoardType
+  authorId  String
+  author    User      @relation("UserComments", fields: [authorId], references: [id])
+  
+  complaintId String?
+  complaint   Complaint? @relation("ComplaintComments", fields: [complaintId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
