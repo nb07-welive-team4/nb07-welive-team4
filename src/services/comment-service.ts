@@ -7,6 +7,7 @@ import {
 } from "../types/comment-types.js";
 import { NotFoundError, ForbiddenError, BadRequestError } from "../errors/errors.js";
 import { Prisma } from "@prisma/client";
+import { UserRole } from "../types/auth.type.js";
 
 // Prisma 반환 타입 별칭
 type CommentWithAuthor = Prisma.CommentGetPayload<{
@@ -61,7 +62,7 @@ const updateComment = async (
 const deleteComment = async (
   commentId: string,
   requestUserId: string,
-  requestUserRole: string,
+  requestUserRole: UserRole,
 ): Promise<void> => {
   const comment = await commentRepository.findCommentById(commentId);
 

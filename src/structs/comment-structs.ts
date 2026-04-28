@@ -9,5 +9,5 @@ export const CreateCommentStruct = object({
 });
 
 export const UpdateCommentStruct = object({
-  content: string(),
+  content: size(string(), 1, 500),
 });
