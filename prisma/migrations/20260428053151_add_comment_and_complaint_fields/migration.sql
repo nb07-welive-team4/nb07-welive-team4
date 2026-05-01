@@ -14,6 +14,9 @@ ADD COLUMN     "ho" TEXT NOT NULL DEFAULT '',
 ADD COLUMN     "status" "ComplaintStatus" NOT NULL DEFAULT 'PENDING',
 ADD COLUMN     "viewsCount" INTEGER NOT NULL DEFAULT 0;
 
+-- AlterTable Comment - complaintId 컬럼 추가
+ALTER TABLE "Comment" ADD COLUMN "complaintId" TEXT;
+
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_residentId_fkey" FOREIGN KEY ("residentId") REFERENCES "Resident"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
