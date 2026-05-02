@@ -1,5 +1,6 @@
 import * as notificationRepository from '../repositories/notification.repository';
 import { NotificationDto } from '../types/notification.type';
+import { NotFoundError, ForbiddenError } from '../errors/errors';
 
 function toNotificationDto(notification: any): NotificationDto {
   return {
@@ -21,8 +22,8 @@ export async function getUnreadNotifications(userId: string): Promise<Notificati
 
 export async function readNotification(notificationId: string, userId: string): Promise<NotificationDto> {
   const notification = await notificationRepository.findNotificationById(notificationId);
-  if (!notification) throw new Error('Notification not found');
-  if (notification.userId !== userId) throw new Error('Unauthorized');
+  if (!notification) throw new NotFoundError('알림을 찾을 수 없습니다.');
+  if (notification.userId !== userId) throw new ForbiddenError('접근 권한이 없습니다.');
   const updated = await notificationRepository.markNotificationAsRead(notificationId);
   return toNotificationDto(updated);
   

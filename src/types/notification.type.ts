@@ -1,6 +1,8 @@
+import { NotificationSourceType } from '@prisma/client';
+
 export type NotificationEventType = 'alarm';
 
-export type NotificationType = 
+export type NotificationType =
   | 'COMPLAINT_RESOLVED'
   | 'NOTICE_CREATED'
   | 'POLL_CREATED';
@@ -31,6 +33,8 @@ export interface CreateNotificationInput {
   complaintId?: string | null;
   noticeId?: string | null;
   pollId?: string | null;
+  sourceType?: NotificationSourceType | null;
+  sourceId?: string | null;
 };
 
 

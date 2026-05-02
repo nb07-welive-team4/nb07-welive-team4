@@ -37,16 +37,16 @@ model User {
   isActive   Boolean    @default(true)
 
   // 유저 전용 필드
-  apartmentName     String?  // 아파트 이름 (가입 시 입력)
-  apartmentDong     String?  // 아파트 동 (가입 시 입력)
-  apartmentHo       String?  // 아파트 호 (가입 시 입력)
+  apartmentName String? // 아파트 이름 (가입 시 입력)
+  apartmentDong String? // 아파트 동 (가입 시 입력)
+  apartmentHo   String? // 아파트 호 (가입 시 입력)
 
   // 자신이 관리하는 아파트(Admin 전용)
-  apartmentId       String?   @unique
-  managedApartment  Apartment? @relation(fields: [apartmentId], references: [id])
+  apartmentId      String?    @unique
+  managedApartment Apartment? @relation(fields: [apartmentId], references: [id])
 
-  residentId    String?   @unique
-  resident      Resident? @relation(fields: [residentId], references: [id], onDelete: SetNull)
+  residentId String?   @unique
+  resident   Resident? @relation(fields: [residentId], references: [id], onDelete: SetNull)
 
   refreshTokens RefreshToken[]
   complaints    Complaint[]    @relation("UserComplaints")
@@ -70,18 +70,18 @@ enum IsHouseholder {
 }
 
 model Resident {
-  id                String  @id @default(uuid())
-  building          String
-  unitNumber        String
-  contact           String  @unique
-  name              String
-  residenceStatus   ResidenceStatus @default(RESIDENCE)
-  isHouseholder     IsHouseholder @default(HOUSEHOLDER)
-  isRegistered      Boolean @default(false)
+  id              String          @id @default(uuid())
+  building        String
+  unitNumber      String
+  contact         String          @unique
+  name            String
+  residenceStatus ResidenceStatus @default(RESIDENCE)
+  isHouseholder   IsHouseholder   @default(HOUSEHOLDER)
+  isRegistered    Boolean         @default(false)
 
-  user              User?
-  apartmentId       String
-  apartment         Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  user        User?
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -125,12 +125,12 @@ model Apartment {
   apartmentStatus    ApartMentStatus @default(PENDING)
 
   // 관리자 관계 (1:1)
-  admin        User?   @relation()
+  admin User? @relation()
 
-  residents      Resident[]
+  residents Resident[]
 
   // 아파트 게시판 관계
-  boards             Board[]
+  boards Board[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -226,6 +226,104 @@ model Vote {
   @@unique([userId, pollId])
 }
 
+enum NotificationType {
+  COMPLAINT_RESOLVED
+  NOTICE_CREATED
+  POLL_CREATED
+}
+
+enum NotificationSourceType {
+  COMPLAINT
+  NOTICE
+  POLL
+  SYSTEM
+}
+
+enum NotificationDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum NotificationOutboxStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+model Notification {
+  notificationId String @id @default(uuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  content          String
+  notificationType NotificationType
+  isChecked        Boolean          @default(false)
+  dedupeKey        String?
+  complaintId      String?
+  noticeId         String?
+  pollId           String?
+  notifiedAt       DateTime         @default(now())
+
+  title      String?
+  sourceType NotificationSourceType?
+  sourceId   String?
+  checkedAt  DateTime?
+
+  deliveryStatus NotificationDeliveryStatus @default(PENDING)
+  sentAt         DateTime?
+  failedAt       DateTime?
+  failedReason   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  outboxEvents NotificationOutbox[]
+
+  @@unique([userId, dedupeKey])
+  @@index([userId])
+  @@index([userId, notifiedAt])
+  @@index([userId, isChecked, notifiedAt])
+  @@index([notificationType, notifiedAt])
+  @@index([sourceType, sourceId])
+  @@index([deliveryStatus, notifiedAt])
+}
+
+model NotificationOutbox {
+  id String @id @default(uuid())
+
+  notificationId String?
+  notification   Notification? @relation(fields: [notificationId], references: [notificationId], onDelete: SetNull)
+
+  userId String
+
+  notificationType NotificationType
+  sourceType       NotificationSourceType?
+  sourceId         String?
+
+  dedupeKey String?
+  payload   Json
+
+  status     NotificationOutboxStatus @default(PENDING)
+  retryCount Int                      @default(0)
+
+  availableAt  DateTime  @default(now())
+  processedAt  DateTime?
+  failedAt     DateTime?
+  failedReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, dedupeKey])
+  @@index([status, availableAt])
+  @@index([notificationId])
+  @@index([userId, createdAt])
+  @@index([sourceType, sourceId])
+}
+
 enum NoticeCategory {
   MAINTENANCE
   EMERGENCY
@@ -233,28 +331,6 @@ enum NoticeCategory {
   RESIDENT_VOTE
   RESIDENT_COUNCIL
   ETC
-}
-
-enum NotificationType {
-  COMPLAINT_RESOLVED
-  NOTICE_CREATED
-  POLL_CREATED
-}
-
-model Notification {
-  notificationId   String           @id @default(uuid())
-  userId           String
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  content          String
-  notificationType NotificationType
-  isChecked        Boolean          @default(false)
-  dedupeKey        String?          @unique
-  complaintId      String?
-  noticeId         String?
-  pollId           String?
-  notifiedAt       DateTime         @default(now())
-
-  @@index([userId])
 }
 
 model Notice {
