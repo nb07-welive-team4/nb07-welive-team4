@@ -1,4 +1,5 @@
 import prisma from "../lib/prisma.js";
+import { BoardType } from "@prisma/client";
 
 // 이벤트 목록 조회 (아파트 + 연월 기준)
 export const findEventsByApartmentAndMonth = async (
@@ -36,7 +37,7 @@ export const findEventById = async (eventId: string) => {
 // 이벤트 생성
 export const createEvent = async (data: {
   apartmentId: string;
-  boardType: string;
+  boardType: BoardType;
   boardId: string;
   title: string;
   category: string;
