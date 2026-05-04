@@ -8,7 +8,7 @@ export async function createAndDispatchNotification(
   input: CreateNotificationInput,
 ): Promise<NotificationDto> {
   if (input.dedupeKey) {
-    const existing = await notificationRepository.findNotificationByDedupeKey(input.dedupeKey);
+    const existing = await notificationRepository.findNotificationByDedupeKey(input.userId, input.dedupeKey);
     if (existing) {
       return toNotificationDto(existing);
     }
@@ -18,7 +18,12 @@ export async function createAndDispatchNotification(
   const saved = await notificationRepository.createNotifiacationRecord(input);
   const dto = toNotificationDto(saved);
 
-  await publishNotificationCreated(input.userId, dto);
+  // Redis publish is best-effort; Outbox ensures guaranteed delivery even if this fails
+  try {
+    await publishNotificationCreated(input.userId, dto);
+  } catch {
+    // ignore — NotificationOutbox handles eventual delivery
+  }
 
   return dto;
 }

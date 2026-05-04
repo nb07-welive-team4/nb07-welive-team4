@@ -59,3 +59,35 @@ export class UserRepo {
     });
   };
 }
+
+export async function findUserResidentBuilding(userId: string): Promise<string | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { resident: { select: { building: true } } },
+  });
+  return user?.resident?.building ?? null;
+}
+
+export async function findNotificationTargetUserIdsByApartmentId({
+  apartmentId,
+  buildingPermission,
+}: {
+  apartmentId: string;
+  buildingPermission?: number;
+}): Promise<string[]> {
+  const users = await prisma.user.findMany({
+    where: {
+      isActive: true,
+      joinStatus: 'APPROVED',
+      resident: {
+        apartmentId,
+        isRegistered: true,
+        ...(buildingPermission !== undefined && buildingPermission !== 0
+          ? { building: String(buildingPermission) }
+          : {}),
+      },
+    },
+    select: { id: true },
+  });
+  return users.map((u) => u.id);
+}

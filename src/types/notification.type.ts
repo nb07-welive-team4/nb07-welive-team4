@@ -3,6 +3,7 @@ import { NotificationSourceType } from '@prisma/client';
 export type NotificationEventType = 'alarm';
 
 export type NotificationType =
+  | 'COMPLAINT_CREATED'
   | 'COMPLAINT_RESOLVED'
   | 'NOTICE_CREATED'
   | 'POLL_CREATED';
@@ -16,14 +17,12 @@ export interface NotificationDto {
   complaintId?: string | null;
   noticeId?: string | null;
   pollId?: string | null;
-
 };
 
 export interface NotificationSsePayload {
   type: 'alarm';
   data: NotificationDto[];
 };
-
 
 export interface CreateNotificationInput {
   userId: string;
@@ -35,7 +34,42 @@ export interface CreateNotificationInput {
   pollId?: string | null;
   sourceType?: NotificationSourceType | null;
   sourceId?: string | null;
+  title?: string | null;
 };
 
+// ─── Helper input 타입 ────────────────────────────────────────────────────────
 
+export type CreateComplaintNotificationInput = {
+  userId: string;
+  complaintId: string;
+  content: string;
+  title?: string;
+};
 
+export type CreateNoticeCreatedNotificationInput = {
+  userId: string;
+  noticeId: string;
+  content: string;
+  title?: string;
+};
+
+export type CreatePollCreatedNotificationInput = {
+  userId: string;
+  pollId: string;
+  content: string;
+  title?: string;
+};
+
+export type CreateNoticeCreatedNotificationsForUsersInput = {
+  userIds: string[];
+  noticeId: string;
+  content: string;
+  title?: string;
+};
+
+export type CreatePollCreatedNotificationsForUsersInput = {
+  userIds: string[];
+  pollId: string;
+  content: string;
+  title?: string;
+};

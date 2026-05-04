@@ -1,5 +1,10 @@
 import * as pollRepository from "../repositories/poll.repository";
-import { NotFoundError, BadRequestError, ConflictError } from "../errors/errors";
+import { NotFoundError, BadRequestError, ConflictError, ForbiddenError } from "../errors/errors";
+import { createPollCreatedNotificationsForUsers } from "./notification.helper.service";
+import {
+  findNotificationTargetUserIdsByApartmentId,
+  findUserResidentBuilding,
+} from "../repositories/user.repository";
 import { parsePagination } from "../utils/pagination.util";
 import type {
   PollListQuery,
@@ -68,7 +73,7 @@ export const createPoll = async (dto: CreatePollDto, authorId: string) => {
   if (startDate >= endDate) throw new BadRequestError("시작일은 종료일보다 이전이어야 합니다.");
   if (dto.options.length < 2) throw new BadRequestError("선택지는 최소 2개 이상이어야 합니다.");
 
-  await pollRepository.createPoll({
+  const createdPoll = await pollRepository.createPoll({
     boardId: dto.boardId,
     authorId,
     title: dto.title,
@@ -79,6 +84,23 @@ export const createPoll = async (dto: CreatePollDto, authorId: string) => {
     endDate,
     options: dto.options,
   });
+
+  try {
+    const targetUserIds = await findNotificationTargetUserIdsByApartmentId({
+      apartmentId: createdPoll.board.apartmentId,
+      buildingPermission: createdPoll.buildingPermission,
+    });
+    if (targetUserIds.length > 0) {
+      await createPollCreatedNotificationsForUsers({
+        userIds: targetUserIds,
+        pollId: createdPoll.id,
+        content: `새로운 투표가 등록되었습니다: ${createdPoll.title}`,
+        title: '새 투표',
+      });
+    }
+  } catch (error) {
+    console.error('[Notification] Failed to create poll notifications', error);
+  }
 
   return { message: "정상적으로 등록 처리되었습니다" };
 };
@@ -127,7 +149,13 @@ export const castVote = async (optionId: string, userId: string) => {
   if (option.poll.status !== "IN_PROGRESS")
     throw new BadRequestError("진행 중인 투표만 참여할 수 있습니다.");
 
-  // TODO: 유저의 동(buildingPermission)과 투표 대상 buildingPermission 일치 여부 검증 필요
+  if (option.poll.buildingPermission !== 0) {
+    const residentBuilding = await findUserResidentBuilding(userId);
+    if (residentBuilding !== String(option.poll.buildingPermission)) {
+      throw new ForbiddenError("해당 동 주민만 투표할 수 있습니다.");
+    }
+  }
+
   const existingVote = await pollRepository.getUserVote(userId, option.pollId);
   if (existingVote) throw new ConflictError("이미 투표에 참여했습니다.");
 
