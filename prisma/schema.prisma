@@ -132,7 +132,8 @@ model Apartment {
   residents Resident[]
 
   // 아파트 게시판 관계
-  boards Board[]
+  boards             Board[]
+  events             Event[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -385,4 +386,22 @@ model Comment {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+
+model Event {
+  id          String    @id @default(uuid())
+  start       DateTime
+  end         DateTime
+  title       String
+  category    String
+  type        String    // NOTICE | POLL
+  boardType   BoardType
+  boardId     String
+
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
