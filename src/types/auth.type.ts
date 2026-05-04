@@ -1,21 +1,26 @@
 import { JwtPayload } from "jsonwebtoken";
 
+export type UserRole = "USER" | "ADMIN" | "SUPER_ADMIN";
+type JoinStatus = "PENDING" | "APPROVED" | "REJECTED";
+
 export interface CreateUserDTO {
   username: string;
   password: string;
   contact: string;
   name: string;
   email: string;
-  role: "USER" | "ADMIN" | "SUPER_ADMIN";
-  residentApartmentId?: string;
+  role: UserRole;
+  apartmentId?: string;
   apartmentName?: string;
   apartmentDong?: string;
   apartmentHo?: string;
-  joinStatus?: "APPROVED";
+  residentId?: string;
+  joinStatus?: JoinStatus;
 }
 
 export interface AuthTokenPayload extends JwtPayload {
   id: string;
   username: string;
-  role: string;
+  role: UserRole;
+  apartmentId?: string;
 }

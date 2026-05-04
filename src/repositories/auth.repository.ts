@@ -29,19 +29,6 @@ export class AuthRepo {
   };
 
   /**
-   * 유저의 소속 아파트 정보를 업데이트합니다. (관리자 회원가입 시 사용)
-   * @param createdAdminId - 업데이트할 사용자 ID
-   * @param createdApartmentId - 연결할 아파트 ID
-   * @param tx - 트랜잭션 클라이언트
-   */
-  updateUser = async (createdAdminId: string, createdApartmentId: string, tx: Prisma.TransactionClient) => {
-    await tx.user.update({
-      where: { id: createdAdminId },
-      data: { residentApartmentId: createdApartmentId },
-    });
-  };
-
-  /**
    * 사용자 아이디(username)로 유저와 소속된 아파트 정보를 조회
    * @param username - 조회할 사용자 아이디
    * @returns 유저 정보와 거주/관리 아파트 정보를 포함한 객체
@@ -50,7 +37,10 @@ export class AuthRepo {
     return await prisma.user.findUnique({
       where: { username },
       include: {
-        residenceApartment: { include: { boards: true } }, // 일반 유저
+        managedApartment: { include: { boards: true } },
+        resident: {
+          include: { apartment: { include: { boards: true } } },
+        },
       },
     });
   };
@@ -123,7 +113,13 @@ export class AuthRepo {
   findById = async (id: string) => {
     return await prisma.user.findUnique({
       where: { id },
-      select: { id: true, role: true, joinStatus: true, residentApartmentId: true },
+      select: {
+        id: true,
+        role: true,
+        joinStatus: true,
+        managedApartment: true,
+        resident: { select: { apartmentId: true } },
+      },
     });
   };
 
@@ -162,9 +158,83 @@ export class AuthRepo {
    * @param status - 변경할 목적 상태 (APPROVED/REJECTED)
    */
   bulkUpdateResidentStatus = async (apartmentId: string, status: JoinStatus) => {
+    // 해당 아파트에 소속된 모든 Resident의 ID 또는 연결된 User ID를 먼저 가져옴
+    const residents = await prisma.resident.findMany({
+      where: { apartmentId: apartmentId },
+      select: { user: { select: { id: true } } },
+    });
+
+    // 추출된 User ID 목록
+    const userIds = residents.map((r) => r.user?.id).filter((id): id is string => !!id);
+
+    if (userIds.length === 0) return { count: 0 };
+
+    // 해당 User ID들에 대해 일괄 업데이트를 진행
     await prisma.user.updateMany({
-      where: { residentApartmentId: apartmentId, joinStatus: "PENDING", role: "USER" },
+      where: {
+        id: { in: userIds },
+        joinStatus: "PENDING",
+        role: "USER",
+      },
       data: { joinStatus: status },
+    });
+  };
+
+  /**
+   * 특정 관리자(ADMIN)의 계정 정보를 업데이트
+   * @param adminId - 수정할 관리자 ID
+   * @param data - 업데이트할 유저 데이터
+   * @param tx - 트랜잭션 클라이언트
+   */
+  updateAdmin = async (adminId: string, data: Prisma.UserUpdateInput, tx: Prisma.TransactionClient) => {
+    await tx.user.update({
+      where: { id: adminId },
+      data: data,
+    });
+  };
+
+  /**
+   * 특정 유저 계정을 삭제
+   * - 관리자 삭제 시 아파트 삭제와 함께 실행됨
+   * @param id - 삭제할 유저 ID
+   * @param tx - 트랜잭션 클라이언트
+   */
+  deleteUser = async (id: string, tx: Prisma.TransactionClient) => {
+    await tx.user.delete({
+      where: { id },
+    });
+  };
+
+  /**
+   * 가입 거절(REJECTED) 상태인 모든 관리자 목록을 조회
+   * - 성능 최적화를 위해 삭제 판단에 필요한 ID와 연관 아파트 ID만 선택적으로 조회
+   * @returns 거절된 관리자 ID와 해당 관리자가 소유한 아파트 ID 목록
+   */
+  rejectedAdmin = async () => {
+    return await prisma.user.findMany({
+      where: { role: "ADMIN", joinStatus: "REJECTED" },
+      select: { id: true, managedApartment: { select: { id: true } } },
+    });
+  };
+
+  /**
+   * 전달받은 ID 목록에 해당하는 관리자 계정들을 일괄 삭제
+   * @param ids - 삭제할 관리자 ID 배열
+   * @param tx - 트랜잭션 클라이언트
+   */
+  adminClean = async (ids: string[], tx: Prisma.TransactionClient) => {
+    await tx.user.deleteMany({
+      where: { id: { in: ids } },
+    });
+  };
+
+  /**
+   * 특정 아파트에 소속된 가입 거절(REJECTED) 상태의 일반 주민(USER)들을 일괄 삭제
+   * @param apartmentId - 대상 아파트 ID
+   */
+  residentClean = async (apartmentId: string) => {
+    await prisma.user.deleteMany({
+      where: { role: "USER", joinStatus: "REJECTED", resident: { apartmentId } },
     });
   };
 }
