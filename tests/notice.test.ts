@@ -171,7 +171,7 @@ describe("Notice 도메인 통합 테스트", () => {
       createdNoticeId = notice?.id ?? "";
     });
 
-    it.skip("startDate가 있으면 이벤트가 자동 등록되어야 한다", async () => {
+    it("startDate가 있으면 이벤트가 자동 등록되어야 한다", async () => {
       const res = await request(app)
         .post("/api/notices")
         .set("Cookie", adminCookie)
