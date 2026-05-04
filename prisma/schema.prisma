@@ -277,13 +277,15 @@ model Notification {
 }
 
 model Notice {
-  id        String         @id @default(uuid())
-  category  NoticeCategory
-  title     String
-  content   String
-  isPinned  Boolean        @default(false)
-  startDate DateTime?
-  endDate   DateTime?
+  id            String         @id @default(uuid())
+  category      NoticeCategory
+  title         String
+  content       String
+  isPinned      Boolean        @default(false)
+  startDate     DateTime?
+  endDate       DateTime?
+  viewsCount    Int            @default(0)
+  commentsCount Int            @default(0)
 
   boardId String
   board   Board  @relation(fields: [boardId], references: [id])
