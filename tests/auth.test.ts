@@ -55,6 +55,7 @@ describe("Auth 도메인 통합 테스트", () => {
   beforeAll(async () => {
     await prisma.refreshToken.deleteMany();
     await prisma.complaint.deleteMany();
+    await prisma.notice.deleteMany();
     await prisma.board.deleteMany();
     await prisma.apartment.deleteMany();
     await prisma.user.deleteMany();
