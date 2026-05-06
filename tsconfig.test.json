@@ -1,10 +1,12 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "CommonJS",
-    "moduleResolution": "Node",
     "types": ["node", "jest"],
-    "ignoreDeprecations": "6.0"
+    "noEmit": true,
+    "rootDir": ".",
+    "moduleResolution": "bundler",
+    "ignoreDeprecations": "5.0"
   },
-  "include": ["src/**/*.ts", "src/**/*.test.ts"]
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "exclude": ["node_modules", "dist", "src/generated"]
 }
