@@ -35,10 +35,7 @@ jobs:
           cat frontend_api_spec.txt
 
       
-      - name: Ensure Claude Code bin directory
-        run: mkdir -p "$HOME/.local/bin"
-
-      - uses: anthropics/claude-code-action@v1
+      - uses: anthropics/claude-code-action@v1.0.99
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
