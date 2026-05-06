@@ -1,0 +1,82 @@
+name: Claude PR Review & Bug Detection
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Checkout Frontend Repo
+        uses: actions/checkout@v6
+        with:
+          repository: dlckdgh0523-lgtm/welive-front
+          path: frontend
+          fetch-depth: 1
+
+      - name: Extract Frontend API Spec
+        run: |
+          grep -r "axios\.\|fetch(" frontend/src \
+            --include="*.ts" --include="*.tsx" --include="*.js" \
+            -h 2>/dev/null | head -50 > frontend_api_spec.txt || echo "No API spec found" > frontend_api_spec.txt
+          echo "=== Frontend API Spec ===" 
+          cat frontend_api_spec.txt
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Review this pull request only for high-confidence issues.
+
+            Focus on:
+            - Code quality and best practices
+            - Potential bugs
+            - Security implications
+            - Performance considerations
+            - Frontend API compatibility
+
+            The frontend repository has been checked out into `frontend/`.
+            The `frontend_api_spec.txt` file contains extracted frontend API call patterns.
+
+            Verify:
+            - Backend endpoint paths match frontend API calls.
+            - HTTP methods are consistent.
+            - Request/Response DTO field names align.
+            - Frontend-used response fields exist in backend responses.
+            - Any mismatch must include the file path, the problem, why it matters, and how to fix it.
+
+            Scope control:
+            - Do not scan the entire repository.
+            - Use only the PR diff and `frontend_api_spec.txt`.
+            - If context is insufficient, leave a short top-level comment asking for the specific file instead of exploring broadly.
+            - Focus only on high-confidence issues.
+            - Do not comment on style-only issues.
+
+            Use `gh pr comment` for top-level feedback.
+            Use `mcp__github_inline_comment__create_inline_comment` with `confirmed: true` for specific code issues.
+            Only post GitHub comments.
+
+            Additional instruction:
+            - Write all review comments in Korean.
+            - Keep technical terms, code, commands, file paths, API endpoints, DTO names, field names, branch names, and identifiers in their original English form.
+            - Use a respectful and supportive Korean tone.
+            - For each issue, clearly explain in Korean: what the problem is, why it matters, and how to fix it.
+            - Avoid vague criticism.
+          claude_args: |
+            --model claude-sonnet-4-5
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(cat frontend_api_spec.txt)"

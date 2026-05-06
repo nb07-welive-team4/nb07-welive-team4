@@ -1,0 +1,115 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+      - release-candidate
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10  
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/testdb
+      REDIS_URL: redis://127.0.0.1:6379
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npx prisma generate
+      - name: Validate migrations
+        run: npx prisma migrate deploy
+      - name: Test
+        run: npm run test:ci
+      - name: Build
+        run: npm run build
+
+  docker-health-check:
+    needs: build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build Docker image
+        run: docker build -t advanced-backend .
+      - name: Run container
+        run: |
+          docker run -d --name advanced-backend -p 4000:4000 \
+            --network host \
+            -e NODE_ENV=production \
+            -e PORT=4000 \
+            -e CORS_ORIGIN=* \
+            -e AWS_REGION=ap-northeast-2 \
+            -e S3_BUCKET=ci-test-bucket \
+            -e DATABASE_URL=postgresql://test:test@127.0.0.1:5432/testdb \
+            -e DB_HOST=127.0.0.1 \
+            -e DB_PORT=5432 \
+            -e DB_NAME=testdb \
+            -e DB_USER=test \
+            -e DB_PASSWORD=test \
+            -e DB_SSL=false \
+            -e REDIS_URL=redis://127.0.0.1:6379 \
+            advanced-backend
+      - name: Wait and check health
+        run: |
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:4000/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs advanced-backend
+          exit 1
+      - name: Cleanup
+        if: always()
+        run: docker rm -f advanced-backend || true
