@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -25,16 +23,20 @@ enum JoinStatus {
 }
 
 model User {
-  id         String     @id @default(uuid())
-  email      String     @unique
-  username   String     @unique
-  contact    String     @unique
-  password   String
-  name       String
-  avatar     String?
-  role       Role       @default(USER)
-  joinStatus JoinStatus @default(PENDING)
-  isActive   Boolean    @default(true)
+  id                String   @id @default(uuid())
+  email             String   @unique
+  username          String   @unique
+  contact           String   @unique
+  password          String
+  name              String
+  avatar            String?
+  role              Role     @default(USER)
+  comments          Comment[] @relation("UserComments")
+  // 승인상태
+  joinStatus        JoinStatus @default(PENDING)
+
+  // 계정 활성화 여부
+  isActive          Boolean  @default(true)
 
   // 유저 전용 필드
   apartmentName     String?  // 아파트 이름 (가입 시 입력)
@@ -131,6 +133,7 @@ model Apartment {
 
   // 아파트 게시판 관계
   boards             Board[]
+  events             Event[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -154,6 +157,8 @@ model Board {
   polls      Poll[]
   notices    Notice[]
 
+  comments   Comment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -170,8 +175,21 @@ model Complaint {
   authorId String
   author   User   @relation("UserComplaints", fields: [authorId], references: [id])
 
+  status        ComplaintStatus @default(PENDING)
+  viewsCount    Int             @default(0)
+  commentsCount Int             @default(0)
+  dong          String          @default("")
+  ho            String          @default("")
+  comments      Comment[]       @relation("ComplaintComments")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum ComplaintStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
 }
 
 enum PollStatus {
@@ -237,6 +255,7 @@ enum NoticeCategory {
 
 enum NotificationType {
   COMPLAINT_RESOLVED
+  COMPLAINT_CREATED
   NOTICE_CREATED
   POLL_CREATED
 }
@@ -258,13 +277,15 @@ model Notification {
 }
 
 model Notice {
-  id        String         @id @default(uuid())
-  category  NoticeCategory
-  title     String
-  content   String
-  isPinned  Boolean        @default(false)
-  startDate DateTime?
-  endDate   DateTime?
+  id            String         @id @default(uuid())
+  category      NoticeCategory
+  title         String
+  content       String
+  isPinned      Boolean        @default(false)
+  startDate     DateTime?
+  endDate       DateTime?
+  viewsCount    Int            @default(0)
+  commentsCount Int            @default(0)
 
   boardId String
   board   Board  @relation(fields: [boardId], references: [id])
@@ -272,6 +293,40 @@ model Notice {
   authorId String
   author   User   @relation("UserNotices", fields: [authorId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  content   String
+  boardId   String
+  boardType BoardType
+  board       Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  
+  authorId  String
+  author    User      @relation("UserComments", fields: [authorId], references: [id])
+  
+  complaintId String?
+  complaint   Complaint? @relation("ComplaintComments", fields: [complaintId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Event {
+  id          String    @id @default(uuid())
+  start       DateTime
+  end         DateTime
+  title       String
+  category    String
+  type        String    // NOTICE | POLL
+  boardType   BoardType
+  boardId     String
+
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
