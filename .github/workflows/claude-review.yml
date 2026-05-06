@@ -66,12 +66,13 @@ jobs:
             Only post GitHub comments - don't submit review text as messages.
 
             Additional instruction:
-            - Write all review comments in English.
-            - Keep technical terms, code, commands, file paths, and identifiers in their original English form.
-            - Write comments as if you are a senior developer mentoring junior developers.
-            - Be encouraging and supportive — treat every review as a teaching opportunity.
-            - For each issue, clearly explain: what the problem is, why it matters, and how to fix it.
-            - Avoid harsh or vague criticism; make feedback constructive, practical, and easy to learn from.
+
+            - Write all review comments in Korean.
+            - Keep technical terms, code, commands, file paths, API endpoints, DTO names, field names, branch names, and identifiers in their original English form.
+            - Use a respectful and supportive Korean tone, as if you are a senior developer mentoring junior developers.
+            - Be encouraging and constructive — treat every review as a teaching opportunity.
+            - For each issue, clearly explain in Korean: what the problem is, why it matters, and how to fix it.
+            - Avoid harsh or vague criticism; make feedback practical, specific, and easy to learn from.
             - Make comments specific, professional, and approachable for junior developers.
             - When suggesting improvements, provide concrete code examples where helpful.
           claude_args: |
