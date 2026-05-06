@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import prisma from "../lib/prisma";
 import { getSkip } from "../utils/pagination.util";
-import type { ApartmentPublicQuery, ApartmentAdminQuery } from "../types/apartment.types";
+import type { ApartmentPublicQuery, ApartmentAdminQuery, ApartmentStatus } from "../types/apartment.types";
 import type { CreateApartDto } from "../types/apart.type";
 
 //아파트 목록 조회
@@ -132,6 +132,24 @@ export class ApartRepo {
   deleteApartmentsById = async (ids: string[], tx: Prisma.TransactionClient) => {
     await tx.apartment.deleteMany({
       where: { id: { in: ids } },
+    });
+  };
+
+  // super-admin이 admin 승인 시 아파트 상태도 함께 업데이트
+  updateApartmentStatus = async (id: string, status: ApartmentStatus, tx?: Prisma.TransactionClient) => {
+    const client = tx || prisma;
+    await client.apartment.update({
+      where: { id },
+      data: { apartmentStatus: status },
+    });
+  };
+
+  // 일괄 승인 시 아파트 상태 일괄 업데이트
+  bulkUpdateApartmentStatus = async (ids: string[], status: ApartmentStatus, tx?: Prisma.TransactionClient) => {
+    const client = tx || prisma;
+    await client.apartment.updateMany({
+      where: { id: { in: ids } },
+      data: { apartmentStatus: status },
     });
   };
 }

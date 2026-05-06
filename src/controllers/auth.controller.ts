@@ -125,9 +125,9 @@ export class AuthController {
 
     const { adminId } = req.params;
     const { status } = req.body;
-    await this.authService.updateAdminStatus(adminId, status);
+    const updateAdmin = await this.authService.updateAdminStatus(adminId, status);
 
-    res.status(200).json({ message: "작업이 성공적으로 완료되었습니다." });
+    res.status(200).json(updateAdmin);
   };
 
   /**

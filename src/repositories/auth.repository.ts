@@ -86,7 +86,7 @@ export class AuthRepo {
       select: {
         expiresAt: true,
         userId: true,
-        user: { select: { id: true, username: true, role: true } },
+        user: { select: { id: true, username: true, role: true, apartmentId: true } },
       },
     });
   };
@@ -108,16 +108,18 @@ export class AuthRepo {
   /**
    * 사용자 ID를 통해 유저의 권한 및 상태 정보를 조회
    * @param id - 조회할 사용자 ID
+   * @param tx - 트랜잭션 클라이언트 (선택)
    * @returns 권한, 가입 상태, 소속 아파트 ID를 포함한 유저 정보
    */
-  findById = async (id: string) => {
-    return await prisma.user.findUnique({
+  findById = async (id: string, tx?: Prisma.TransactionClient) => {
+    const client = tx || prisma;
+    return await client.user.findUnique({
       where: { id },
       select: {
         id: true,
         role: true,
         joinStatus: true,
-        managedApartment: true,
+        apartmentId: true,
         resident: { select: { apartmentId: true } },
       },
     });
@@ -127,12 +129,16 @@ export class AuthRepo {
    * 특정 사용자의 가입 승인 상태를 업데이트
    * @param userId - 상태를 변경할 사용자 ID
    * @param status - 새로운 가입 상태 (APPROVED/REJECTED)
+   * @param tx - 트랜잭션 클라이언트 (선택)
    */
-  updateUserStatus = async (userId: string, status: JoinStatus) => {
-    await prisma.user.update({
+  updateUserStatus = async (userId: string, status: JoinStatus, tx?: Prisma.TransactionClient) => {
+    const client = tx || prisma;
+    const updateUser = await client.user.update({
       where: { id: userId },
       data: { joinStatus: status },
+      select: { id: true, name: true, joinStatus: true },
     });
+    return updateUser;
   };
 
   /**
@@ -140,8 +146,9 @@ export class AuthRepo {
    * @param status - 변경할 목적 상태 (APPROVED/REJECTED)
    * @returns Promise<void>
    */
-  bulkUpdateAdminStatus = async (status: JoinStatus): Promise<void> => {
-    await prisma.user.updateMany({
+  bulkUpdateAdminStatus = async (status: JoinStatus, tx?: Prisma.TransactionClient): Promise<void> => {
+    const client = tx || prisma;
+    await client.user.updateMany({
       where: {
         role: "ADMIN",
         joinStatus: "PENDING",
@@ -213,7 +220,7 @@ export class AuthRepo {
   rejectedAdmin = async () => {
     return await prisma.user.findMany({
       where: { role: "ADMIN", joinStatus: "REJECTED" },
-      select: { id: true, managedApartment: { select: { id: true } } },
+      select: { id: true, apartmentId: true },
     });
   };
 
@@ -236,5 +243,19 @@ export class AuthRepo {
     await prisma.user.deleteMany({
       where: { role: "USER", joinStatus: "REJECTED", resident: { apartmentId } },
     });
+  };
+
+  /**
+   * 가입 대기 중인 모든 관리자(ADMIN)의 아파트 ID 목록을 조회
+   * @param tx - 트랜잭션 클라이언트 (선택)
+   * @returns 아파트 ID 배열
+   */
+  getPendingAdminApartmentIds = async (tx?: Prisma.TransactionClient) => {
+    const client = tx || prisma;
+    const admins = await client.user.findMany({
+      where: { role: "ADMIN", joinStatus: "PENDING" },
+      select: { apartmentId: true },
+    });
+    return admins.map((a) => a.apartmentId).filter((id): id is string => !!id);
   };
 }
