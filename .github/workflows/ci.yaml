@@ -6,6 +6,7 @@ on:
       - develop
       - main
       - release-candidate
+
 jobs:
   build:
     runs-on: ubuntu-latest
