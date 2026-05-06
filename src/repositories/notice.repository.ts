@@ -5,7 +5,6 @@ import { getSkip } from "../utils/pagination.util";
 // 공지사항 목록 조회
 export const findNotices = async (apartmentId: string, query: NoticeListQuery) => {
   const { page = 1, limit = 11, category, search } = query;
-
   const where: any = {
     board: { apartmentId },
     ...(category && { category }),
@@ -16,7 +15,6 @@ export const findNotices = async (apartmentId: string, query: NoticeListQuery) =
       ],
     }),
   };
-
   const [notices, totalCount] = await Promise.all([
     prisma.notice.findMany({
       where,
@@ -29,19 +27,29 @@ export const findNotices = async (apartmentId: string, query: NoticeListQuery) =
     }),
     prisma.notice.count({ where }),
   ]);
-
   return { notices, totalCount };
 };
 
 // 공지사항 단건 조회
 export const findNoticeById = async (noticeId: string) => {
-  return prisma.notice.findUnique({
+  const notice = await prisma.notice.findUnique({
     where: { id: noticeId },
     include: {
       author: { select: { id: true, name: true } },
       board: { select: { name: true, apartmentId: true } },
     },
   });
+
+  if (!notice) return null;
+
+  // boardId로 댓글 조회
+  const comments = await prisma.comment.findMany({
+    where: { boardId: noticeId, boardType: "NOTICE" },
+    include: { author: { select: { id: true, name: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return { ...notice, comments };
 };
 
 // 공지사항 생성

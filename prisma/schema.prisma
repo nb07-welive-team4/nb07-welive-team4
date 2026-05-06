@@ -189,7 +189,7 @@ model Complaint {
 enum ComplaintStatus {
   PENDING
   IN_PROGRESS
-  COMPLETED
+  RESOLVED
 }
 
 enum PollStatus {
