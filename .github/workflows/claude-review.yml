@@ -19,6 +19,21 @@ jobs:
           fetch-depth: 1
           ref: ${{ github.event.pull_request.head.ref }}
 
+      - name: Checkout Frontend Repo
+        uses: actions/checkout@v6
+        with:
+          repository: dlckdgh0523-lgtm/welive-front
+          path: frontend
+          fetch-depth: 1
+
+      - name: Extract Frontend API Spec
+        run: |
+          grep -r "fetch\|axios\|api\|endpoint" frontend/src \
+            --include="*.ts" --include="*.tsx" --include="*.js" \
+            -h 2>/dev/null | head -100 > frontend_api_spec.txt || echo "No API spec found" > frontend_api_spec.txt
+          echo "=== Frontend API Spec ===" 
+          cat frontend_api_spec.txt
+
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -32,17 +47,32 @@ jobs:
             - Security implications
             - Performance considerations
 
+            ## Frontend API Compatibility Check
+            The frontend repository (dlckdgh0523-lgtm/welive-front) has been checked out
+            into the `frontend/` directory.
+            The `frontend_api_spec.txt` file contains the frontend API call patterns.
+
+            Please verify the following:
+            - Whether the backend changes match the frontend API endpoints
+            - Whether the Request/Response DTO field names align with what the frontend expects
+            - Whether all field names used in the frontend exist in the backend response
+            - Whether HTTP methods (GET/POST/PUT/DELETE) are consistent
+            - If any mismatch is found, clearly specify which part differs and why it matters
+
             Note: The PR branch is already checked out in the current working directory.
 
             Use `gh pr comment` for top-level feedback.
             Use `mcp__github_inline_comment__create_inline_comment` (with `confirmed: true`) to highlight specific code issues.
             Only post GitHub comments - don't submit review text as messages.
+
             Additional instruction:
-            - Write all review comments in Korean.
-            - Keep technical terms, code, commands, file paths, and identifiers in their original English form where appropriate.
-            - Write comments as if you are mentoring beginner developers.
-            - For each issue, clearly explain the problem, the reason it matters, and the recommended fix.
-            - Avoid harsh or vague criticism; make the feedback constructive, practical, and easy to learn from.
-            - Make the comments specific, professional, and understandable for junior developers.
+            - Write all review comments in English.
+            - Keep technical terms, code, commands, file paths, and identifiers in their original English form.
+            - Write comments as if you are a senior developer mentoring junior developers.
+            - Be encouraging and supportive — treat every review as a teaching opportunity.
+            - For each issue, clearly explain: what the problem is, why it matters, and how to fix it.
+            - Avoid harsh or vague criticism; make feedback constructive, practical, and easy to learn from.
+            - Make comments specific, professional, and approachable for junior developers.
+            - When suggesting improvements, provide concrete code examples where helpful.
           claude_args: |
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(cat frontend_api_spec.txt),Bash(ls frontend/*)"
