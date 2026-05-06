@@ -375,11 +375,11 @@ describe("Complaint 도메인 통합 테스트", () => {
       expect(res.status).toBe(400);
     });
 
-    it("관리자가 민원 상태를 COMPLETED로 변경해야 한다", async () => {
+    it("관리자가 민원 상태를 RESOLVED로 변경해야 한다", async () => {
       const res = await request(app)
         .patch(`/api/complaints/${createdComplaintId}/status`)
         .set("Cookie", adminCookie)
-        .send({ status: "COMPLETED" });
+        .send({ status: "RESOLVED" });
 
       expect(res.status).toBe(200);
     });
