@@ -19,7 +19,6 @@ jobs:
           fetch-depth: 1
           ref: ${{ github.event.pull_request.head.ref }}
 
-      
       - name: Checkout Frontend Repo
         uses: actions/checkout@v6
         with:
@@ -27,7 +26,6 @@ jobs:
           path: frontend
           fetch-depth: 1
 
-      
       - name: Extract Frontend API Spec
         run: |
           grep -r "fetch\|axios\|api\|endpoint" frontend/src \
@@ -49,17 +47,17 @@ jobs:
             - Security implications
             - Performance considerations
 
-            ## 프론트엔드 API 호환성 체크
-            프론트엔드 레포(dlckdgh0523-lgtm/welive-front)의 API 호출 코드가
-            `frontend/` 디렉토리에 체크아웃되어 있습니다.
-            `frontend_api_spec.txt` 파일에 프론트의 API 호출 패턴이 있습니다.
+            ## Frontend API Compatibility Check
+            The frontend repository (dlckdgh0523-lgtm/welive-front) has been checked out
+            into the `frontend/` directory.
+            The `frontend_api_spec.txt` file contains the frontend API call patterns.
 
-            다음을 반드시 확인해주세요:
-            - 백엔드 변경사항이 프론트 API 호출과 엔드포인트가 일치하는지
-            - 요청/응답 형식(Request/Response DTO)이 프론트 기대값과 맞는지
-            - 프론트에서 사용하는 필드명이 백엔드 응답에 존재하는지
-            - HTTP 메서드(GET/POST/PUT/DELETE)가 일치하는지
-            - 불일치 발견 시 구체적으로 어떤 부분이 다른지 명시해주세요
+            Please verify the following:
+            - Whether the backend changes match the frontend API endpoints
+            - Whether the Request/Response DTO field names align with what the frontend expects
+            - Whether all field names used in the frontend exist in the backend response
+            - Whether HTTP methods (GET/POST/PUT/DELETE) are consistent
+            - If any mismatch is found, clearly specify which part differs and why it matters
 
             Note: The PR branch is already checked out in the current working directory.
 
@@ -68,11 +66,13 @@ jobs:
             Only post GitHub comments - don't submit review text as messages.
 
             Additional instruction:
-            - Write all review comments in Korean.
-            - Keep technical terms, code, commands, file paths, and identifiers in their original English form where appropriate.
-            - Write comments as if you are mentoring beginner developers.
-            - For each issue, clearly explain the problem, the reason it matters, and the recommended fix.
-            - Avoid harsh or vague criticism; make the feedback constructive, practical, and easy to learn from.
-            - Make the comments specific, professional, and understandable for junior developers.
+            - Write all review comments in English.
+            - Keep technical terms, code, commands, file paths, and identifiers in their original English form.
+            - Write comments as if you are a senior developer mentoring junior developers.
+            - Be encouraging and supportive — treat every review as a teaching opportunity.
+            - For each issue, clearly explain: what the problem is, why it matters, and how to fix it.
+            - Avoid harsh or vague criticism; make feedback constructive, practical, and easy to learn from.
+            - Make comments specific, professional, and approachable for junior developers.
+            - When suggesting improvements, provide concrete code examples where helpful.
           claude_args: |
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(cat frontend_api_spec.txt),Bash(ls frontend/*)"
