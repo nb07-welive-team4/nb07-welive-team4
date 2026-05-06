@@ -33,6 +33,7 @@ const superAdminPayload = {
 const adminPayload = {
   username: "notice_admin",
   password: "password123!",
+  passwordConfirm: "password123!",
   name: "관리자",
   contact: "01066660001",
   email: "notice_admin@test.com",
@@ -150,16 +151,13 @@ describe("Notice 도메인 통합 테스트", () => {
   // ────────────────────────────────────────────
   describe("POST /api/notices — 공지사항 등록", () => {
     it("관리자가 공지사항을 정상적으로 등록해야 한다", async () => {
-      const res = await request(app)
-        .post("/api/notices")
-        .set("Cookie", adminCookie)
-        .send({
-          category: "MAINTENANCE",
-          title: "엘리베이터 점검 안내",
-          content: "엘리베이터 정기 점검이 있을 예정입니다.",
-          boardId,
-          isPinned: false,
-        });
+      const res = await request(app).post("/api/notices").set("Cookie", adminCookie).send({
+        category: "MAINTENANCE",
+        title: "엘리베이터 점검 안내",
+        content: "엘리베이터 정기 점검이 있을 예정입니다.",
+        boardId,
+        isPinned: false,
+      });
 
       expect(res.status).toBe(201);
       expect(res.body.message).toBe("정상적으로 등록 처리되었습니다");
@@ -172,18 +170,15 @@ describe("Notice 도메인 통합 테스트", () => {
     });
 
     it("startDate가 있으면 이벤트가 자동 등록되어야 한다", async () => {
-      const res = await request(app)
-        .post("/api/notices")
-        .set("Cookie", adminCookie)
-        .send({
-          category: "COMMUNITY",
-          title: "주민 모임 안내",
-          content: "주민 모임이 있습니다.",
-          boardId,
-          isPinned: false,
-          startDate: "2025-07-01T00:00:00.000Z",
-          endDate: "2025-07-01T23:59:59.999Z",
-        });
+      const res = await request(app).post("/api/notices").set("Cookie", adminCookie).send({
+        category: "COMMUNITY",
+        title: "주민 모임 안내",
+        content: "주민 모임이 있습니다.",
+        boardId,
+        isPinned: false,
+        startDate: "2025-07-01T00:00:00.000Z",
+        endDate: "2025-07-01T23:59:59.999Z",
+      });
 
       expect(res.status).toBe(201);
 
@@ -197,44 +192,36 @@ describe("Notice 도메인 통합 테스트", () => {
     });
 
     it("입주민이 공지사항 등록 시도하면 403을 반환해야 한다", async () => {
-      const res = await request(app)
-        .post("/api/notices")
-        .set("Cookie", userCookie)
-        .send({
-          category: "MAINTENANCE",
-          title: "테스트",
-          content: "테스트",
-          boardId,
-          isPinned: false,
-        });
+      const res = await request(app).post("/api/notices").set("Cookie", userCookie).send({
+        category: "MAINTENANCE",
+        title: "테스트",
+        content: "테스트",
+        boardId,
+        isPinned: false,
+      });
 
       expect(res.status).toBe(403);
     });
 
     it("category가 없으면 400을 반환해야 한다", async () => {
-      const res = await request(app)
-        .post("/api/notices")
-        .set("Cookie", adminCookie)
-        .send({
-          title: "테스트",
-          content: "테스트",
-          boardId,
-          isPinned: false,
-        });
+      const res = await request(app).post("/api/notices").set("Cookie", adminCookie).send({
+        title: "테스트",
+        content: "테스트",
+        boardId,
+        isPinned: false,
+      });
 
       expect(res.status).toBe(400);
     });
 
     it("인증 토큰 없이 등록 시 401을 반환해야 한다", async () => {
-      const res = await request(app)
-        .post("/api/notices")
-        .send({
-          category: "MAINTENANCE",
-          title: "테스트",
-          content: "테스트",
-          boardId,
-          isPinned: false,
-        });
+      const res = await request(app).post("/api/notices").send({
+        category: "MAINTENANCE",
+        title: "테스트",
+        content: "테스트",
+        boardId,
+        isPinned: false,
+      });
 
       expect(res.status).toBe(401);
     });
@@ -245,9 +232,7 @@ describe("Notice 도메인 통합 테스트", () => {
   // ────────────────────────────────────────────
   describe("GET /api/notices — 공지사항 목록 조회", () => {
     it("관리자가 공지사항 목록을 조회해야 한다", async () => {
-      const res = await request(app)
-        .get("/api/notices")
-        .set("Cookie", adminCookie);
+      const res = await request(app).get("/api/notices").set("Cookie", adminCookie);
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty("notices");
@@ -262,19 +247,14 @@ describe("Notice 도메인 통합 테스트", () => {
     });
 
     it("입주민도 공지사항 목록을 조회할 수 있어야 한다", async () => {
-      const res = await request(app)
-        .get("/api/notices")
-        .set("Cookie", userCookie);
+      const res = await request(app).get("/api/notices").set("Cookie", userCookie);
 
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body.notices)).toBe(true);
     });
 
     it("category 필터로 조회할 수 있어야 한다", async () => {
-      const res = await request(app)
-        .get("/api/notices")
-        .set("Cookie", adminCookie)
-        .query({ category: "MAINTENANCE" });
+      const res = await request(app).get("/api/notices").set("Cookie", adminCookie).query({ category: "MAINTENANCE" });
 
       expect(res.status).toBe(200);
       res.body.notices.forEach((n: any) => {
@@ -283,10 +263,7 @@ describe("Notice 도메인 통합 테스트", () => {
     });
 
     it("search 필터로 조회할 수 있어야 한다", async () => {
-      const res = await request(app)
-        .get("/api/notices")
-        .set("Cookie", adminCookie)
-        .query({ search: "엘리베이터" });
+      const res = await request(app).get("/api/notices").set("Cookie", adminCookie).query({ search: "엘리베이터" });
 
       expect(res.status).toBe(200);
       expect(res.body.notices.some((n: any) => n.title.includes("엘리베이터"))).toBe(true);
@@ -303,9 +280,7 @@ describe("Notice 도메인 통합 테스트", () => {
   // ────────────────────────────────────────────
   describe("GET /api/notices/:noticeId — 공지사항 상세 조회", () => {
     it("공지사항 상세를 정상적으로 조회해야 한다", async () => {
-      const res = await request(app)
-        .get(`/api/notices/${createdNoticeId}`)
-        .set("Cookie", adminCookie);
+      const res = await request(app).get(`/api/notices/${createdNoticeId}`).set("Cookie", adminCookie);
 
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
@@ -318,20 +293,14 @@ describe("Notice 도메인 통합 테스트", () => {
     });
 
     it("조회 시 viewsCount가 증가해야 한다", async () => {
-      const res1 = await request(app)
-        .get(`/api/notices/${createdNoticeId}`)
-        .set("Cookie", userCookie);
-      const res2 = await request(app)
-        .get(`/api/notices/${createdNoticeId}`)
-        .set("Cookie", userCookie);
+      const res1 = await request(app).get(`/api/notices/${createdNoticeId}`).set("Cookie", userCookie);
+      const res2 = await request(app).get(`/api/notices/${createdNoticeId}`).set("Cookie", userCookie);
 
       expect(res2.body.viewsCount).toBeGreaterThan(res1.body.viewsCount);
     });
 
     it("존재하지 않는 공지사항 조회 시 404를 반환해야 한다", async () => {
-      const res = await request(app)
-        .get("/api/notices/non-existent-id")
-        .set("Cookie", adminCookie);
+      const res = await request(app).get("/api/notices/non-existent-id").set("Cookie", adminCookie);
 
       expect(res.status).toBe(404);
     });
@@ -347,13 +316,10 @@ describe("Notice 도메인 통합 테스트", () => {
   // ────────────────────────────────────────────
   describe("PATCH /api/notices/:noticeId — 공지사항 수정", () => {
     it("관리자가 공지사항을 수정해야 한다", async () => {
-      const res = await request(app)
-        .patch(`/api/notices/${createdNoticeId}`)
-        .set("Cookie", adminCookie)
-        .send({
-          title: "수정된 엘리베이터 점검 안내",
-          isPinned: true,
-        });
+      const res = await request(app).patch(`/api/notices/${createdNoticeId}`).set("Cookie", adminCookie).send({
+        title: "수정된 엘리베이터 점검 안내",
+        isPinned: true,
+      });
 
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
@@ -382,9 +348,7 @@ describe("Notice 도메인 통합 테스트", () => {
     });
 
     it("인증 토큰 없이 수정 시 401을 반환해야 한다", async () => {
-      const res = await request(app)
-        .patch(`/api/notices/${createdNoticeId}`)
-        .send({ title: "수정" });
+      const res = await request(app).patch(`/api/notices/${createdNoticeId}`).send({ title: "수정" });
 
       expect(res.status).toBe(401);
     });
@@ -395,26 +359,20 @@ describe("Notice 도메인 통합 테스트", () => {
   // ────────────────────────────────────────────
   describe("DELETE /api/notices/:noticeId — 공지사항 삭제", () => {
     it("입주민이 공지사항 삭제 시도하면 403을 반환해야 한다", async () => {
-      const res = await request(app)
-        .delete(`/api/notices/${createdNoticeId}`)
-        .set("Cookie", userCookie);
+      const res = await request(app).delete(`/api/notices/${createdNoticeId}`).set("Cookie", userCookie);
 
       expect(res.status).toBe(403);
     });
 
     it("관리자가 공지사항을 삭제해야 한다", async () => {
-      const res = await request(app)
-        .delete(`/api/notices/${createdNoticeId}`)
-        .set("Cookie", adminCookie);
+      const res = await request(app).delete(`/api/notices/${createdNoticeId}`).set("Cookie", adminCookie);
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe("정상적으로 삭제 처리되었습니다");
     });
 
     it("이미 삭제된 공지사항 삭제 시 404를 반환해야 한다", async () => {
-      const res = await request(app)
-        .delete(`/api/notices/${createdNoticeId}`)
-        .set("Cookie", adminCookie);
+      const res = await request(app).delete(`/api/notices/${createdNoticeId}`).set("Cookie", adminCookie);
 
       expect(res.status).toBe(404);
     });
