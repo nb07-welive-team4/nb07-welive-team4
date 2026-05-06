@@ -33,6 +33,8 @@ jobs:
             -h 2>/dev/null | head -50 > frontend_api_spec.txt || echo "No API spec found" > frontend_api_spec.txt
           echo "=== Frontend API Spec ===" 
           cat frontend_api_spec.txt
+
+      
       - name: Ensure Claude Code bin directory
         run: mkdir -p "$HOME/.local/bin"
 
