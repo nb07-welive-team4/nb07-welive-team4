@@ -28,51 +28,55 @@ jobs:
 
       - name: Extract Frontend API Spec
         run: |
-          grep -r "fetch\|axios\|api\|endpoint" frontend/src \
+          grep -r "axios\.\|fetch(" frontend/src \
             --include="*.ts" --include="*.tsx" --include="*.js" \
-            -h 2>/dev/null | head -100 > frontend_api_spec.txt || echo "No API spec found" > frontend_api_spec.txt
+            -h 2>/dev/null | head -50 > frontend_api_spec.txt || echo "No API spec found" > frontend_api_spec.txt
           echo "=== Frontend API Spec ===" 
           cat frontend_api_spec.txt
 
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: claude-sonnet-4-5
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
-            Please review this pull request with a focus on:
+            Review this pull request only for high-confidence issues.
+
+            Focus on:
             - Code quality and best practices
-            - Potential bugs or issues
+            - Potential bugs
             - Security implications
             - Performance considerations
+            - Frontend API compatibility
 
-            ## Frontend API Compatibility Check
-            The frontend repository (dlckdgh0523-lgtm/welive-front) has been checked out
-            into the `frontend/` directory.
-            The `frontend_api_spec.txt` file contains the frontend API call patterns.
+            The frontend repository has been checked out into `frontend/`.
+            The `frontend_api_spec.txt` file contains extracted frontend API call patterns.
 
-            Please verify the following:
-            - Whether the backend changes match the frontend API endpoints
-            - Whether the Request/Response DTO field names align with what the frontend expects
-            - Whether all field names used in the frontend exist in the backend response
-            - Whether HTTP methods (GET/POST/PUT/DELETE) are consistent
-            - If any mismatch is found, clearly specify which part differs and why it matters
+            Verify:
+            - Backend endpoint paths match frontend API calls.
+            - HTTP methods are consistent.
+            - Request/Response DTO field names align.
+            - Frontend-used response fields exist in backend responses.
+            - Any mismatch must include the file path, the problem, why it matters, and how to fix it.
 
-            Note: The PR branch is already checked out in the current working directory.
+            Scope control:
+            - Do not scan the entire repository.
+            - Use only the PR diff and `frontend_api_spec.txt`.
+            - If context is insufficient, leave a short top-level comment asking for the specific file instead of exploring broadly.
+            - Focus only on high-confidence issues.
+            - Do not comment on style-only issues.
 
             Use `gh pr comment` for top-level feedback.
-            Use `mcp__github_inline_comment__create_inline_comment` (with `confirmed: true`) to highlight specific code issues.
-            Only post GitHub comments - don't submit review text as messages.
+            Use `mcp__github_inline_comment__create_inline_comment` with `confirmed: true` for specific code issues.
+            Only post GitHub comments.
 
             Additional instruction:
             - Write all review comments in Korean.
             - Keep technical terms, code, commands, file paths, API endpoints, DTO names, field names, branch names, and identifiers in their original English form.
-            - Use a respectful and supportive Korean tone, as if you are a senior developer mentoring junior developers.
-            - Be encouraging and constructive — treat every review as a teaching opportunity.
+            - Use a respectful and supportive Korean tone.
             - For each issue, clearly explain in Korean: what the problem is, why it matters, and how to fix it.
-            - Avoid harsh or vague criticism; make feedback practical, specific, and easy to learn from.
-            - Make comments specific, professional, and approachable for junior developers.
-            - When suggesting improvements, provide concrete code examples where helpful.
+            - Avoid vague criticism.
           claude_args: |
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(cat frontend_api_spec.txt),Bash(ls frontend/*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(cat frontend_api_spec.txt)"
