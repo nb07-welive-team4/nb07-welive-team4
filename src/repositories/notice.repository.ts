@@ -1,6 +1,6 @@
-import prisma from "../lib/prisma.js";
+import prisma from "../lib/prisma";
 import { CreateNoticeBody, UpdateNoticeBody, NoticeListQuery } from "../types/notice.types";
-import { getSkip } from "../utils/pagination.util.js";
+import { getSkip } from "../utils/pagination.util";
 
 // 공지사항 목록 조회
 export const findNotices = async (apartmentId: string, query: NoticeListQuery) => {

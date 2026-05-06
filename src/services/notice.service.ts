@@ -1,5 +1,7 @@
 import * as noticeRepository from "../repositories/notice.repository";
-import * as notificationRepository from "../repositories/notification.repository";
+import { createNoticeCreatedNotificationsForUsers } from "./notification.helper.service";
+import { findNotificationTargetUserIdsByApartmentId } from "../repositories/user.repository";
+import prisma from "../lib/prisma";
 import {
   CreateNoticeBody,
   UpdateNoticeBody,
@@ -8,8 +10,7 @@ import {
   NoticeDetail,
   NoticeListItem,
 } from "../types/notice.types";
-import { NotFoundError, ForbiddenError } from "../errors/errors";
-import prisma from "../lib/prisma.js";
+import { NotFoundError } from "../errors/errors";
 
 // 응답 포맷 - 목록
 const formatNoticeListItem = (notice: any): NoticeListItem => ({
@@ -61,69 +62,54 @@ export const getNoticeById = async (noticeId: string): Promise<NoticeDetail> => 
   const notice = await noticeRepository.findNoticeById(noticeId);
   if (!notice) throw new NotFoundError("공지사항을 찾을 수 없습니다.");
 
-  // 조회수 증가
   await noticeRepository.incrementViewsCount(noticeId);
 
   return formatNoticeDetail({ ...notice, viewsCount: notice.viewsCount + 1 });
 };
 
 // 공지사항 등록
-export const createNotice = async (
-  authorId: string,
-  body: CreateNoticeBody,
-) => {
+export const createNotice = async (authorId: string, body: CreateNoticeBody) => {
   const notice = await noticeRepository.createNotice(authorId, body);
 
-  // 아파트 입주민 전체에게 알림 전송
   const apartmentId = (notice as any).board?.apartmentId;
   if (apartmentId) {
-    const residents = await prisma.user.findMany({
-      where: {
-        role: "USER",
-        joinStatus: "APPROVED",
-        managedApartment: null,
-        apartmentName: {
-          not: null,
-        },
-      },
-      select: { id: true },
-    });
-
-    for (const resident of residents) {
-      const dedupeKey = `notice-created-${notice.id}-${resident.id}`;
-      const existing = await notificationRepository.findNotificationByDedupeKey(dedupeKey);
-      if (!existing) {
-        await notificationRepository.createNotifiacationRecord({
-          userId: resident.id,
-          content: `새로운 공지사항이 등록되었습니다: ${notice.title}`,
-          notificationType: "NOTICE_CREATED",
-          dedupeKey,
+    try {
+      const userIds = await findNotificationTargetUserIdsByApartmentId({ apartmentId });
+      if (userIds.length > 0) {
+        await createNoticeCreatedNotificationsForUsers({
+          userIds,
           noticeId: notice.id,
+          content: `새로운 공지사항이 등록되었습니다: ${notice.title}`,
+          title: "새 공지",
         });
       }
+    } catch (err) {
+      console.error("[Notice] Failed to send notice notifications", err);
     }
   }
 
-  // startDate 있으면 이벤트 자동 등록
   if (body.startDate) {
-    const board = await prisma.board.findUnique({
-      where: { id: body.boardId },
-      select: { apartmentId: true },
-    });
-
-    if (board) {
-      await prisma.event.create({
-        data: {
-          title: notice.title,
-          category: notice.category,
-          type: "NOTICE",
-          boardType: "NOTICE",
-          boardId: notice.id,
-          apartmentId: board.apartmentId,
-          start: new Date(body.startDate),
-          end: body.endDate ? new Date(body.endDate) : new Date(body.startDate),
-        },
+    try {
+      const board = await prisma.board.findUnique({
+        where: { id: body.boardId },
+        select: { apartmentId: true },
       });
+      if (board) {
+        await prisma.event.create({
+          data: {
+            title: notice.title,
+            category: notice.category,
+            type: "NOTICE",
+            boardType: "NOTICE",
+            boardId: notice.id,
+            apartmentId: board.apartmentId,
+            start: new Date(body.startDate),
+            end: body.endDate ? new Date(body.endDate) : new Date(body.startDate),
+          },
+        });
+      }
+    } catch (err) {
+      console.error("[Notice] Failed to create event", err);
     }
   }
 
@@ -131,10 +117,7 @@ export const createNotice = async (
 };
 
 // 공지사항 수정
-export const updateNotice = async (
-  noticeId: string,
-  body: UpdateNoticeBody,
-) => {
+export const updateNotice = async (noticeId: string, body: UpdateNoticeBody) => {
   const notice = await noticeRepository.findNoticeById(noticeId);
   if (!notice) throw new NotFoundError("공지사항을 찾을 수 없습니다.");
 

@@ -3,9 +3,9 @@ import { assert } from "superstruct";
 import * as noticeService from "../services/notice.service";
 import { CreateNoticeStruct, UpdateNoticeStruct } from "../structs/notice.struct";
 import { parsePagination } from "../utils/pagination.util";
-import { NoticeListQuery } from "../types/notice.types";
+import { NoticeListQuery, CreateNoticeBody, UpdateNoticeBody } from "../types/notice.types";
 
-// GET /api/notices
+
 export const getNotices = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { page, limit, category, search } = req.query;
@@ -31,13 +31,13 @@ export const getNotices = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-// POST /api/notices
+
 export const createNotice = async (req: Request, res: Response, next: NextFunction) => {
   try {
     assert(req.body, CreateNoticeStruct);
 
     const authorId = req.user.id;
-    const result = await noticeService.createNotice(authorId, req.body);
+    const result = await noticeService.createNotice(authorId, req.body as unknown as CreateNoticeBody);
 
     res.status(201).json(result);
   } catch (err) {
@@ -45,7 +45,7 @@ export const createNotice = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-// GET /api/notices/:noticeId
+
 export const getNoticeById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const noticeId = req.params["noticeId"] as string;
@@ -57,13 +57,12 @@ export const getNoticeById = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-// PATCH /api/notices/:noticeId
 export const updateNotice = async (req: Request, res: Response, next: NextFunction) => {
   try {
     assert(req.body, UpdateNoticeStruct);
 
     const noticeId = req.params["noticeId"] as string;
-    const result = await noticeService.updateNotice(noticeId, req.body);
+    const result = await noticeService.updateNotice(noticeId, req.body as unknown as UpdateNoticeBody);
 
     res.status(200).json(result);
   } catch (err) {
@@ -71,7 +70,7 @@ export const updateNotice = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-// DELETE /api/notices/:noticeId
+
 export const deleteNotice = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const noticeId = req.params["noticeId"] as string;
