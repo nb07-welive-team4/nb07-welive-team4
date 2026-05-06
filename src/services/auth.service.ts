@@ -370,8 +370,18 @@ export class AuthService {
     }
 
     await prisma.$transaction(async (tx) => {
+      // 유저의 아파트 참조를 먼저 해제하여 FK 제약조건 회피
+      await tx.user.update({
+        where: { id: adminId },
+        data: { apartmentId: null },
+      });
+
+      // FK 제약 조건 오류를 방지하기 위해 아파트에 종속된 게시판(Board) 등 먼저 삭제
+      await tx.board.deleteMany({ where: { apartmentId } });
+
+      // 안전하게 아파트 직접 삭제
+      await tx.apartment.delete({ where: { id: apartmentId } });
       await this.authRepo.deleteUser(adminId, tx);
-      await this.apartRepo.deleteApart(apartmentId, tx);
     });
   };
 
@@ -388,9 +398,20 @@ export class AuthService {
     const apartmentIds = rejectedAdmins.map((a) => a.apartmentId).filter((id): id is string => !!id);
 
     await prisma.$transaction(async (tx) => {
-      await this.authRepo.adminClean(adminIds, tx);
+      if (apartmentIds.length > 0) {
+        // 유저의 아파트 참조를 해제하여 아파트 삭제 시 FK 제약조건 오류 방지
+        await tx.user.updateMany({
+          where: { id: { in: adminIds } },
+          data: { apartmentId: null },
+        });
 
-      await this.apartRepo.deleteApartmentsById(apartmentIds, tx);
+        // FK 제약 조건 오류를 방지하기 위해 관련 게시판(Board) 먼저 일괄 삭제
+        await tx.board.deleteMany({ where: { apartmentId: { in: apartmentIds } } });
+
+        // 아파트 일괄 삭제
+        await tx.apartment.deleteMany({ where: { id: { in: apartmentIds } } });
+      }
+      await this.authRepo.adminClean(adminIds, tx);
     });
   };
 
