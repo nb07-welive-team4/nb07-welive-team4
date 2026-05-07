@@ -12,7 +12,7 @@ COPY tsconfig.build.json ./
 COPY tsup.config.ts ./
 COPY src ./src
 
-RUN npx prisma generate
+RUN DATABASE_URL="postgresql://user:password@localhost:5432/db" npx prisma generate
 RUN npm run build
 
 FROM node:20-alpine AS runner
