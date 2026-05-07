@@ -16,6 +16,11 @@ const castVoteRepoMock = jest.fn() as jest.MockedFunction<AnyFn>;
 const cancelVoteRepoMock = jest.fn() as jest.MockedFunction<AnyFn>;
 const findUserResidentBuildingMock = jest.fn() as jest.MockedFunction<AnyFn>;
 const findNotificationTargetUserIdsMock = jest.fn() as jest.MockedFunction<AnyFn>;
+const createPollCreatedNotificationsForUsersMock = jest.fn() as jest.MockedFunction<AnyFn>;
+
+jest.unstable_mockModule('../src/services/notification.helper.service', () => ({
+  createPollCreatedNotificationsForUsers: createPollCreatedNotificationsForUsersMock,
+}));
 
 jest.unstable_mockModule('../src/repositories/poll.repository', () => ({
   findPolls: findPollsMock,
@@ -165,7 +170,14 @@ describe('poll.service', () => {
     };
 
     it('정상 생성 시 성공 메시지를 반환한다', async () => {
-      createPollMock.mockResolvedValue({});
+      createPollMock.mockResolvedValue({
+        id: 'poll-id-1',
+        title: validDto.title,
+        buildingPermission: validDto.buildingPermission,
+        board: { apartmentId: 'apt-id-1' },
+      });
+      findNotificationTargetUserIdsMock.mockResolvedValue(['user-id-2']);
+      createPollCreatedNotificationsForUsersMock.mockResolvedValue([]);
 
       const result = await createPoll(validDto, 'user-id-1');
 
@@ -192,7 +204,13 @@ describe('poll.service', () => {
     });
 
     it('status 미입력 시 PENDING으로 기본값이 설정된다', async () => {
-      createPollMock.mockResolvedValue({});
+      createPollMock.mockResolvedValue({
+        id: 'poll-id-1',
+        title: validDto.title,
+        buildingPermission: validDto.buildingPermission,
+        board: { apartmentId: 'apt-id-1' },
+      });
+      findNotificationTargetUserIdsMock.mockResolvedValue([]);
 
       await createPoll(validDto, 'user-id-1');
 

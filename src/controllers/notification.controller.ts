@@ -17,24 +17,14 @@ export async function streamUnreadNotifications(req: Request, res: Response) {
   logger.info('[SSE] client connected', { userId });
 
   const unread = await getUnreadNotifications(userId);
-  res.write(
-    formatSseMessage(NOTIFICATION_SSE_EVENT, {
-      type: NOTIFICATION_SSE_EVENT,
-      data: unread,
-    })
-  );
+  res.write(formatSseMessage(NOTIFICATION_SSE_EVENT, unread));
 
   const heartbeatTimer = startHeartbeat(res);
 
   const pollingTimer = setInterval(async () => {
     try {
       const notifications = await getUnreadNotifications(userId);
-      res.write(
-        formatSseMessage(NOTIFICATION_SSE_EVENT, {
-          type: NOTIFICATION_SSE_EVENT,
-          data: notifications,
-        })
-      );
+      res.write(formatSseMessage(NOTIFICATION_SSE_EVENT, notifications));
     } catch (err) {
       logger.error('[SSE] polling error', { userId, err });
     }

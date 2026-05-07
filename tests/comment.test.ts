@@ -34,6 +34,7 @@ const superAdminPayload = {
 const adminPayload = {
   username: "comment_admin",
   password: "password123!",
+  passwordConfirm: "password123!",
   name: "관리자",
   contact: "01099990001",
   email: "comment_admin@test.com",
@@ -113,9 +114,7 @@ describe("Comment 도메인 통합 테스트", () => {
       .send({ username: superAdminPayload.username, password: superAdminPayload.password });
     const superAdminCookieHeader = superAdminLogin.get("Set-Cookie");
     if (!superAdminCookieHeader) throw new Error("슈퍼어드민 쿠키 없음");
-    superAdminCookie = Array.isArray(superAdminCookieHeader)
-      ? superAdminCookieHeader
-      : [superAdminCookieHeader];
+    superAdminCookie = Array.isArray(superAdminCookieHeader) ? superAdminCookieHeader : [superAdminCookieHeader];
 
     // 관리자 회원가입
     await request(app).post("/api/auth/signup/admin").send(adminPayload);
@@ -187,14 +186,11 @@ describe("Comment 도메인 통합 테스트", () => {
   // ────────────────────────────────────────────
   describe("POST /api/comments — 댓글 생성", () => {
     it("입주민이 댓글을 정상적으로 생성해야 한다", async () => {
-      const res = await request(app)
-        .post("/api/comments")
-        .set("Cookie", userCookie)
-        .send({
-          content: "테스트 댓글입니다.",
-          boardType: "COMPLAINT",
-          boardId,
-        });
+      const res = await request(app).post("/api/comments").set("Cookie", userCookie).send({
+        content: "테스트 댓글입니다.",
+        boardType: "COMPLAINT",
+        boardId,
+      });
 
       expect(res.status).toBe(201);
       expect(res.body.comment).toMatchObject({
@@ -212,64 +208,50 @@ describe("Comment 도메인 통합 테스트", () => {
     });
 
     it("관리자도 댓글을 생성할 수 있어야 한다", async () => {
-      const res = await request(app)
-        .post("/api/comments")
-        .set("Cookie", adminCookie)
-        .send({
-          content: "관리자 댓글입니다.",
-          boardType: "COMPLAINT",
-          boardId,
-        });
+      const res = await request(app).post("/api/comments").set("Cookie", adminCookie).send({
+        content: "관리자 댓글입니다.",
+        boardType: "COMPLAINT",
+        boardId,
+      });
 
       expect(res.status).toBe(201);
       expect(res.body.comment.writerName).toBe(adminPayload.name);
     });
 
     it("인증 토큰 없이 댓글 생성 시 401을 반환해야 한다", async () => {
-      const res = await request(app)
-        .post("/api/comments")
-        .send({
-          content: "인증 없는 댓글",
-          boardType: "COMPLAINT",
-          boardId,
-        });
+      const res = await request(app).post("/api/comments").send({
+        content: "인증 없는 댓글",
+        boardType: "COMPLAINT",
+        boardId,
+      });
 
       expect(res.status).toBe(401);
     });
 
     it("content가 없으면 400을 반환해야 한다", async () => {
-      const res = await request(app)
-        .post("/api/comments")
-        .set("Cookie", userCookie)
-        .send({
-          boardType: "COMPLAINT",
-          boardId,
-        });
+      const res = await request(app).post("/api/comments").set("Cookie", userCookie).send({
+        boardType: "COMPLAINT",
+        boardId,
+      });
 
       expect(res.status).toBe(400);
     });
 
     it("boardType이 없으면 400을 반환해야 한다", async () => {
-      const res = await request(app)
-        .post("/api/comments")
-        .set("Cookie", userCookie)
-        .send({
-          content: "boardType 없는 댓글",
-          boardId,
-        });
+      const res = await request(app).post("/api/comments").set("Cookie", userCookie).send({
+        content: "boardType 없는 댓글",
+        boardId,
+      });
 
       expect(res.status).toBe(400);
     });
 
     it("유효하지 않은 boardType이면 400을 반환해야 한다", async () => {
-      const res = await request(app)
-        .post("/api/comments")
-        .set("Cookie", userCookie)
-        .send({
-          content: "잘못된 boardType",
-          boardType: "INVALID",
-          boardId,
-        });
+      const res = await request(app).post("/api/comments").set("Cookie", userCookie).send({
+        content: "잘못된 boardType",
+        boardType: "INVALID",
+        boardId,
+      });
 
       expect(res.status).toBe(400);
     });
@@ -280,12 +262,9 @@ describe("Comment 도메인 통합 테스트", () => {
   // ────────────────────────────────────────────
   describe("PATCH /api/comments/:commentId — 댓글 수정", () => {
     it("본인이 작성한 댓글을 수정할 수 있어야 한다", async () => {
-      const res = await request(app)
-        .patch(`/api/comments/${createdCommentId}`)
-        .set("Cookie", userCookie)
-        .send({
-          content: "수정된 댓글입니다.",
-        });
+      const res = await request(app).patch(`/api/comments/${createdCommentId}`).set("Cookie", userCookie).send({
+        content: "수정된 댓글입니다.",
+      });
 
       expect(res.status).toBe(200);
       expect(res.body.comment).toMatchObject({
@@ -299,35 +278,27 @@ describe("Comment 도메인 통합 테스트", () => {
     });
 
     it("다른 사람의 댓글을 수정하면 403을 반환해야 한다", async () => {
-      const res = await request(app)
-        .patch(`/api/comments/${createdCommentId}`)
-        .set("Cookie", user2Cookie)
-        .send({
-          content: "남의 댓글 수정 시도",
-        });
+      const res = await request(app).patch(`/api/comments/${createdCommentId}`).set("Cookie", user2Cookie).send({
+        content: "남의 댓글 수정 시도",
+      });
 
       expect(res.status).toBe(403);
     });
 
     it("존재하지 않는 댓글 수정 시 404를 반환해야 한다", async () => {
-      const res = await request(app)
-        .patch(`/api/comments/non-existent-id`)
-        .set("Cookie", userCookie)
-        .send({
-          content: "없는 댓글 수정",
-        });
+      const res = await request(app).patch(`/api/comments/non-existent-id`).set("Cookie", userCookie).send({
+        content: "없는 댓글 수정",
+      });
 
       expect(res.status).toBe(404);
     });
 
     it("인증 토큰 없이 댓글 수정 시 401을 반환해야 한다", async () => {
-      const res = await request(app)
-        .patch(`/api/comments/${createdCommentId}`)
-        .send({
-          content: "인증 없는 수정",
-          boardType: "COMPLAINT",
-          boardId,
-        });
+      const res = await request(app).patch(`/api/comments/${createdCommentId}`).send({
+        content: "인증 없는 수정",
+        boardType: "COMPLAINT",
+        boardId,
+      });
 
       expect(res.status).toBe(401);
     });
@@ -338,46 +309,35 @@ describe("Comment 도메인 통합 테스트", () => {
   // ────────────────────────────────────────────
   describe("DELETE /api/comments/:commentId — 댓글 삭제", () => {
     it("다른 입주민이 남의 댓글을 삭제하면 403을 반환해야 한다", async () => {
-      const res = await request(app)
-        .delete(`/api/comments/${createdCommentId}`)
-        .set("Cookie", user2Cookie);
+      const res = await request(app).delete(`/api/comments/${createdCommentId}`).set("Cookie", user2Cookie);
 
       expect(res.status).toBe(403);
     });
 
     it("관리자는 다른 사람의 댓글을 삭제할 수 있어야 한다", async () => {
       // 관리자용 댓글 새로 생성
-      const createRes = await request(app)
-        .post("/api/comments")
-        .set("Cookie", userCookie)
-        .send({
-          content: "관리자가 삭제할 댓글",
-          boardType: "COMPLAINT",
-          boardId,
-        });
+      const createRes = await request(app).post("/api/comments").set("Cookie", userCookie).send({
+        content: "관리자가 삭제할 댓글",
+        boardType: "COMPLAINT",
+        boardId,
+      });
       const targetCommentId = createRes.body.comment.id;
 
-      const res = await request(app)
-        .delete(`/api/comments/${targetCommentId}`)
-        .set("Cookie", adminCookie);
+      const res = await request(app).delete(`/api/comments/${targetCommentId}`).set("Cookie", adminCookie);
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe("정상적으로 삭제 처리되었습니다");
     });
 
     it("본인이 작성한 댓글을 삭제할 수 있어야 한다", async () => {
-      const res = await request(app)
-        .delete(`/api/comments/${createdCommentId}`)
-        .set("Cookie", userCookie);
+      const res = await request(app).delete(`/api/comments/${createdCommentId}`).set("Cookie", userCookie);
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe("정상적으로 삭제 처리되었습니다");
     });
 
     it("이미 삭제된 댓글을 삭제하면 404를 반환해야 한다", async () => {
-      const res = await request(app)
-        .delete(`/api/comments/${createdCommentId}`)
-        .set("Cookie", userCookie);
+      const res = await request(app).delete(`/api/comments/${createdCommentId}`).set("Cookie", userCookie);
 
       expect(res.status).toBe(404);
     });

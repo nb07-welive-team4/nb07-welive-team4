@@ -1,4 +1,4 @@
-export type ComplaintStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+export type ComplaintStatus = 'PENDING' | 'IN_PROGRESS' | 'RESOLVED';
 
 export interface CreateComplaintBody {
   title: string;

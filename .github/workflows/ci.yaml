@@ -5,6 +5,7 @@ on:
     branches:
       - develop
       - main
+      - release-candidate
 
 jobs:
   build:
@@ -31,24 +32,34 @@ jobs:
           --health-cmd="redis-cli ping"
           --health-interval=5s
           --health-timeout=5s
-          --health-retries=10  
+          --health-retries=10
+
     env:
       DATABASE_URL: postgresql://test:test@localhost:5432/testdb
       REDIS_URL: redis://127.0.0.1:6379
+      JWT_ACCESS_SECRET: test_access_secret
+      JWT_REFRESH_SECRET: test_refresh_secret
+
     steps:
       - uses: actions/checkout@v6
+
       - uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: npm
+
       - name: Install dependencies
         run: npm ci
+
       - name: Generate Prisma client
         run: npx prisma generate
+
       - name: Validate migrations
         run: npx prisma migrate deploy
+
       - name: Test
         run: npm run test:ci
+
       - name: Build
         run: npm run build
 
@@ -78,10 +89,13 @@ jobs:
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
+
     steps:
       - uses: actions/checkout@v6
+
       - name: Build Docker image
         run: docker build -t advanced-backend .
+
       - name: Run container
         run: |
           docker run -d --name advanced-backend -p 4000:4000 \
@@ -99,7 +113,10 @@ jobs:
             -e DB_PASSWORD=test \
             -e DB_SSL=false \
             -e REDIS_URL=redis://127.0.0.1:6379 \
+            -e JWT_ACCESS_SECRET=test_access_secret \
+            -e JWT_REFRESH_SECRET=test_refresh_secret \
             advanced-backend
+
       - name: Wait and check health
         run: |
           for i in $(seq 1 20); do
@@ -110,6 +127,7 @@ jobs:
           done
           docker logs advanced-backend
           exit 1
+
       - name: Cleanup
         if: always()
         run: docker rm -f advanced-backend || true
