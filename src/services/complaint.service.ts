@@ -156,7 +156,7 @@ export const updateComplaintStatus = async (
 
   await complaintRepository.updateComplaintStatus(complaintId, body.status);
 
-  if (complaint.status !== 'COMPLETED' && body.status === 'COMPLETED') {
+  if (complaint.status !== 'RESOLVED' && body.status === 'RESOLVED') {
     await createComplaintResolvedNotification({
       userId: complaint.authorId,
       complaintId,
