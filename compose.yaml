@@ -6,9 +6,6 @@ services:
       - "4000:4000"
     env_file:
       - .env
-    environment:
-      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET:-ci_dummy_access_secret_key}
-      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-ci_dummy_refresh_secret_key}
     depends_on:
       - redis
     restart: unless-stopped
