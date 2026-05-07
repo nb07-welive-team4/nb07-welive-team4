@@ -33,6 +33,19 @@ jest.unstable_mockModule("../src/lib/s3", () => ({
   s3: { send: jest.fn() },
 }));
 
+jest.unstable_mockModule("../src/middlewares/auth.middleware", () => ({
+  authMiddleware: jest.fn((_req: any, _res: any, next: any) => {
+    _req.user = { id: "test-super-admin-id", username: "test_superadmin", role: "SUPER_ADMIN" };
+    next();
+  }),
+  authorizeRole: jest.fn((roles: string[]) => (_req: any, _res: any, next: any) => {
+    if (!roles.includes(_req.user?.role)) {
+      return _res.status(403).json({ message: "권한이 없습니다." });
+    }
+    next();
+  }),
+}));
+
 const request = (await import("supertest")).default;
 const app = (await import("../src/app")).default;
 
