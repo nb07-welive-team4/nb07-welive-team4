@@ -14,6 +14,8 @@ const findOptionsWithVotesMock = jest.fn() as jest.MockedFunction<AnyFn>;
 const getUserVoteMock = jest.fn() as jest.MockedFunction<AnyFn>;
 const castVoteRepoMock = jest.fn() as jest.MockedFunction<AnyFn>;
 const cancelVoteRepoMock = jest.fn() as jest.MockedFunction<AnyFn>;
+const findUserResidentBuildingMock = jest.fn() as jest.MockedFunction<AnyFn>;
+const findNotificationTargetUserIdsMock = jest.fn() as jest.MockedFunction<AnyFn>;
 
 jest.unstable_mockModule('../src/repositories/poll.repository', () => ({
   findPolls: findPollsMock,
@@ -26,6 +28,12 @@ jest.unstable_mockModule('../src/repositories/poll.repository', () => ({
   getUserVote: getUserVoteMock,
   castVote: castVoteRepoMock,
   cancelVote: cancelVoteRepoMock,
+}));
+
+jest.unstable_mockModule('../src/repositories/user.repository', () => ({
+  UserRepo: class MockUserRepo {},
+  findNotificationTargetUserIdsByApartmentId: findNotificationTargetUserIdsMock,
+  findUserResidentBuilding: findUserResidentBuildingMock,
 }));
 
 const { getPolls, getPollById, createPoll, updatePoll, deletePoll, castVote, cancelVote } =
@@ -57,7 +65,7 @@ const mockOption = {
   id: 'opt-id-1',
   title: '101호',
   pollId: 'poll-id-1',
-  poll: { id: 'poll-id-1', status: 'IN_PROGRESS' },
+  poll: { id: 'poll-id-1', status: 'IN_PROGRESS', buildingPermission: 0 },
   _count: { votes: 5 },
 };
 
@@ -296,6 +304,7 @@ describe('poll.service', () => {
 
     beforeEach(() => {
       findOptionByIdMock.mockResolvedValue(mockOption);
+      findUserResidentBuildingMock.mockResolvedValue(null);
       getUserVoteMock.mockResolvedValue(null);
       castVoteRepoMock.mockResolvedValue({});
       findOptionsWithVotesMock.mockResolvedValue(mockOptionsWithVotes);
@@ -329,6 +338,38 @@ describe('poll.service', () => {
       getUserVoteMock.mockResolvedValue({ id: 'vote-id-1', optionId: 'opt-id-1' });
 
       await expect(castVote('opt-id-1', 'user-id-1')).rejects.toMatchObject({ statusCode: 409 });
+    });
+
+    it('buildingPermission이 101이고 resident.building이 "101"이면 투표 가능하다', async () => {
+      findOptionByIdMock.mockResolvedValue({
+        ...mockOption,
+        poll: { id: 'poll-id-1', status: 'IN_PROGRESS', buildingPermission: 101 },
+      });
+      findUserResidentBuildingMock.mockResolvedValue('101');
+
+      const result = await castVote('opt-id-1', 'user-id-1');
+
+      expect(result.message).toBe('투표가 완료되었습니다.');
+    });
+
+    it('buildingPermission이 101이고 resident.building이 다르면 403을 던진다', async () => {
+      findOptionByIdMock.mockResolvedValue({
+        ...mockOption,
+        poll: { id: 'poll-id-1', status: 'IN_PROGRESS', buildingPermission: 101 },
+      });
+      findUserResidentBuildingMock.mockResolvedValue('102');
+
+      await expect(castVote('opt-id-1', 'user-id-1')).rejects.toMatchObject({ statusCode: 403 });
+    });
+
+    it('buildingPermission이 101이고 resident가 없으면 403을 던진다', async () => {
+      findOptionByIdMock.mockResolvedValue({
+        ...mockOption,
+        poll: { id: 'poll-id-1', status: 'IN_PROGRESS', buildingPermission: 101 },
+      });
+      findUserResidentBuildingMock.mockResolvedValue(null);
+
+      await expect(castVote('opt-id-1', 'user-id-1')).rejects.toMatchObject({ statusCode: 403 });
     });
   });
 

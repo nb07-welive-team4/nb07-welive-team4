@@ -18,15 +18,31 @@ export async function streamUnreadNotifications(req: Request, res: Response) {
 
   const unread = await getUnreadNotifications(userId);
   res.write(
-    formatSseMessage(NOTIFICATION_SSE_EVENT,{
+    formatSseMessage(NOTIFICATION_SSE_EVENT, {
       type: NOTIFICATION_SSE_EVENT,
       data: unread,
     })
-
   );
+
   const heartbeatTimer = startHeartbeat(res);
+
+  const pollingTimer = setInterval(async () => {
+    try {
+      const notifications = await getUnreadNotifications(userId);
+      res.write(
+        formatSseMessage(NOTIFICATION_SSE_EVENT, {
+          type: NOTIFICATION_SSE_EVENT,
+          data: notifications,
+        })
+      );
+    } catch (err) {
+      logger.error('[SSE] polling error', { userId, err });
+    }
+  }, 30000);
+
   req.on('close', () => {
     clearInterval(heartbeatTimer);
+    clearInterval(pollingTimer);
     removeSseClient(userId, res);
     res.end();
     logger.info('[SSE] client disconnected', { userId });

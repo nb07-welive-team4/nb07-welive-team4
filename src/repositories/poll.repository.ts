@@ -63,6 +63,7 @@ export const createPoll = async (data: {
       ...rest,
       options: { create: options.map(({ title }) => ({ title })) },
     },
+    include: { board: { select: { apartmentId: true } } },
   });
 };
 

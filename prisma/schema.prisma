@@ -23,32 +23,32 @@ enum JoinStatus {
 }
 
 model User {
-  id                String   @id @default(uuid())
-  email             String   @unique
-  username          String   @unique
-  contact           String   @unique
-  password          String
-  name              String
-  avatar            String?
-  role              Role     @default(USER)
-  comments          Comment[] @relation("UserComments")
+  id         String     @id @default(uuid())
+  email      String     @unique
+  username   String     @unique
+  contact    String     @unique
+  password   String
+  name       String
+  avatar     String?
+  role       Role       @default(USER)
+  comments   Comment[]  @relation("UserComments")
   // 승인상태
-  joinStatus        JoinStatus @default(PENDING)
+  joinStatus JoinStatus @default(PENDING)
 
   // 계정 활성화 여부
-  isActive          Boolean  @default(true)
+  isActive Boolean @default(true)
 
   // 유저 전용 필드
-  apartmentName     String?  // 아파트 이름 (가입 시 입력)
-  apartmentDong     String?  // 아파트 동 (가입 시 입력)
-  apartmentHo       String?  // 아파트 호 (가입 시 입력)
+  apartmentName String? // 아파트 이름 (가입 시 입력)
+  apartmentDong String? // 아파트 동 (가입 시 입력)
+  apartmentHo   String? // 아파트 호 (가입 시 입력)
 
   // 자신이 관리하는 아파트(Admin 전용)
-  apartmentId       String?   @unique
-  managedApartment  Apartment? @relation(fields: [apartmentId], references: [id])
+  apartmentId      String?    @unique
+  managedApartment Apartment? @relation(fields: [apartmentId], references: [id])
 
-  residentId    String?   @unique
-  resident      Resident? @relation(fields: [residentId], references: [id], onDelete: SetNull)
+  residentId String?   @unique
+  resident   Resident? @relation(fields: [residentId], references: [id], onDelete: SetNull)
 
   refreshTokens RefreshToken[]
   complaints    Complaint[]    @relation("UserComplaints")
@@ -72,18 +72,18 @@ enum IsHouseholder {
 }
 
 model Resident {
-  id                String  @id @default(uuid())
-  building          String
-  unitNumber        String
-  contact           String  @unique
-  name              String
-  residenceStatus   ResidenceStatus @default(RESIDENCE)
-  isHouseholder     IsHouseholder @default(HOUSEHOLDER)
-  isRegistered      Boolean @default(false)
+  id              String          @id @default(uuid())
+  building        String
+  unitNumber      String
+  contact         String          @unique
+  name            String
+  residenceStatus ResidenceStatus @default(RESIDENCE)
+  isHouseholder   IsHouseholder   @default(HOUSEHOLDER)
+  isRegistered    Boolean         @default(false)
 
-  user              User?
-  apartmentId       String
-  apartment         Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  user        User?
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -127,9 +127,9 @@ model Apartment {
   apartmentStatus    ApartMentStatus @default(PENDING)
 
   // 관리자 관계 (1:1)
-  admin        User?   @relation()
+  admin User? @relation()
 
-  residents      Resident[]
+  residents Resident[]
 
   // 아파트 게시판 관계
   boards             Board[]
@@ -157,7 +157,7 @@ model Board {
   polls      Poll[]
   notices    Notice[]
 
-  comments   Comment[]
+  comments Comment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -189,7 +189,7 @@ model Complaint {
 enum ComplaintStatus {
   PENDING
   IN_PROGRESS
-  COMPLETED
+  RESOLVED
 }
 
 enum PollStatus {
@@ -244,6 +244,105 @@ model Vote {
   @@unique([userId, pollId])
 }
 
+enum NotificationType {
+  COMPLAINT_CREATED
+  COMPLAINT_RESOLVED
+  NOTICE_CREATED
+  POLL_CREATED
+}
+
+enum NotificationSourceType {
+  COMPLAINT
+  NOTICE
+  POLL
+  SYSTEM
+}
+
+enum NotificationDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum NotificationOutboxStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+model Notification {
+  notificationId String @id @default(uuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  content          String
+  notificationType NotificationType
+  isChecked        Boolean          @default(false)
+  dedupeKey        String?
+  complaintId      String?
+  noticeId         String?
+  pollId           String?
+  notifiedAt       DateTime         @default(now())
+
+  title      String?
+  sourceType NotificationSourceType?
+  sourceId   String?
+  checkedAt  DateTime?
+
+  deliveryStatus NotificationDeliveryStatus @default(PENDING)
+  sentAt         DateTime?
+  failedAt       DateTime?
+  failedReason   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  outboxEvents NotificationOutbox[]
+
+  @@unique([userId, dedupeKey])
+  @@index([userId])
+  @@index([userId, notifiedAt])
+  @@index([userId, isChecked, notifiedAt])
+  @@index([notificationType, notifiedAt])
+  @@index([sourceType, sourceId])
+  @@index([deliveryStatus, notifiedAt])
+}
+
+model NotificationOutbox {
+  id String @id @default(uuid())
+
+  notificationId String?
+  notification   Notification? @relation(fields: [notificationId], references: [notificationId], onDelete: SetNull)
+
+  userId String
+
+  notificationType NotificationType
+  sourceType       NotificationSourceType?
+  sourceId         String?
+
+  dedupeKey String?
+  payload   Json
+
+  status     NotificationOutboxStatus @default(PENDING)
+  retryCount Int                      @default(0)
+
+  availableAt  DateTime  @default(now())
+  processedAt  DateTime?
+  failedAt     DateTime?
+  failedReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, dedupeKey])
+  @@index([status, availableAt])
+  @@index([notificationId])
+  @@index([userId, createdAt])
+  @@index([sourceType, sourceId])
+}
+
 enum NoticeCategory {
   MAINTENANCE
   EMERGENCY
@@ -251,29 +350,6 @@ enum NoticeCategory {
   RESIDENT_VOTE
   RESIDENT_COUNCIL
   ETC
-}
-
-enum NotificationType {
-  COMPLAINT_RESOLVED
-  COMPLAINT_CREATED
-  NOTICE_CREATED
-  POLL_CREATED
-}
-
-model Notification {
-  notificationId   String           @id @default(uuid())
-  userId           String
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  content          String
-  notificationType NotificationType
-  isChecked        Boolean          @default(false)
-  dedupeKey        String?          @unique
-  complaintId      String?
-  noticeId         String?
-  pollId           String?
-  notifiedAt       DateTime         @default(now())
-
-  @@index([userId])
 }
 
 model Notice {
@@ -293,8 +369,8 @@ model Notice {
   authorId String
   author   User   @relation("UserNotices", fields: [authorId], references: [id])
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Comment {
@@ -302,17 +378,18 @@ model Comment {
   content   String
   boardId   String
   boardType BoardType
-  board       Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  
-  authorId  String
-  author    User      @relation("UserComments", fields: [authorId], references: [id])
-  
+  board     Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("UserComments", fields: [authorId], references: [id])
+
   complaintId String?
   complaint   Complaint? @relation("ComplaintComments", fields: [complaintId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
+
 
 model Event {
   id          String    @id @default(uuid())

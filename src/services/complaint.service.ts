@@ -1,5 +1,8 @@
 import * as complaintRepository from '../repositories/complaint.repository';
-import * as notificationRepository from '../repositories/notification.repository';
+import {
+  createComplaintCreatedNotification,
+  createComplaintResolvedNotification,
+} from './notification.helper.service';
 import {
   CreateComplaintBody,
   UpdateComplaintBody,
@@ -114,18 +117,12 @@ export const createComplaint = async (
   const adminId = await getAdminIdByBoardId(body.boardId);
 
   if (adminId) {
-    const dedupeKey = `complaint-created-${complaint.id}`;
-    const existing = await notificationRepository.findNotificationByDedupeKey(dedupeKey);
-
-    if (!existing) {
-      await notificationRepository.createNotifiacationRecord({
-        userId: adminId,
-        content: '새로운 민원이 등록되었습니다.',
-        notificationType: 'COMPLAINT_CREATED' as any,
-        dedupeKey,
-        complaintId: complaint.id,
-      });
-    }
+    await createComplaintCreatedNotification({
+      userId: adminId,
+      complaintId: complaint.id,
+      content: '새로운 민원이 등록되었습니다.',
+      title: '새 민원 등록',
+    });
   }
 
   return complaint;
@@ -159,23 +156,12 @@ export const updateComplaintStatus = async (
 
   await complaintRepository.updateComplaintStatus(complaintId, body.status);
 
-  // 작성 입주민에게 알림 전송
-  const dedupeKey = `complaint-status-${complaintId}-${body.status}`;
-  const existing = await notificationRepository.findNotificationByDedupeKey(dedupeKey);
-
-  if (!existing) {
-    const statusLabel: Record<string, string> = {
-      PENDING: '접수전',
-      IN_PROGRESS: '처리중',
-      COMPLETED: '처리완료',
-    };
-
-    await notificationRepository.createNotifiacationRecord({
+  if (complaint.status !== 'RESOLVED' && body.status === 'RESOLVED') {
+    await createComplaintResolvedNotification({
       userId: complaint.authorId,
-      content: `민원 상태가 "${statusLabel[body.status]}"(으)로 변경되었습니다.`,
-      notificationType: 'COMPLAINT_RESOLVED' as any,
-      dedupeKey,
       complaintId,
+      content: '민원이 처리 완료되었습니다.',
+      title: '민원 처리 완료',
     });
   }
 
