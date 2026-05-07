@@ -37,6 +37,8 @@ jobs:
     env:
       DATABASE_URL: postgresql://test:test@localhost:5432/testdb
       REDIS_URL: redis://127.0.0.1:6379
+      JWT_ACCESS_SECRET: test_access_secret
+      JWT_REFRESH_SECRET: test_refresh_secret
 
     steps:
       - uses: actions/checkout@v6
@@ -111,6 +113,8 @@ jobs:
             -e DB_PASSWORD=test \
             -e DB_SSL=false \
             -e REDIS_URL=redis://127.0.0.1:6379 \
+            -e JWT_ACCESS_SECRET=test_access_secret \
+            -e JWT_REFRESH_SECRET=test_refresh_secret \
             advanced-backend
 
       - name: Wait and check health
