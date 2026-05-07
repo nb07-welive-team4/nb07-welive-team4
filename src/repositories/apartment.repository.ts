@@ -152,4 +152,20 @@ export class ApartRepo {
       data: { apartmentStatus: status },
     });
   };
+
+  /**
+   * 아파트와 종속된 데이터(Board, Poll, Notice, Complaint)를 함께 삭제
+   */
+  deleteApartmentWithAssociations = async (apartmentId: string, tx: Prisma.TransactionClient) => {
+    // Apartment 삭제
+    await tx.apartment.delete({ where: { id: apartmentId } });
+  };
+
+  /**
+   * 다수의 아파트와 종속된 데이터를 일괄 삭제
+   */
+  deleteApartmentsWithAssociations = async (apartmentIds: string[], tx: Prisma.TransactionClient) => {
+    // Apartment 일괄 삭제
+    await tx.apartment.deleteMany({ where: { id: { in: apartmentIds } } });
+  };
 }

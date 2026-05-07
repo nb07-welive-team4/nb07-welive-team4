@@ -258,4 +258,35 @@ export class AuthRepo {
     });
     return admins.map((a) => a.apartmentId).filter((id): id is string => !!id);
   };
+
+  /**
+   * 입주민 ID 또는 사용자 ID로 유저 정보를 조회
+   */
+  findResidentUserById = async (residentId: string) => {
+    return await prisma.user.findFirst({
+      where: {
+        OR: [{ id: residentId }, { residentId: residentId }],
+      },
+    });
+  };
+
+  /**
+   * 단일 유저의 아파트 참조 해제
+   */
+  unlinkApartmentFromUser = async (userId: string, tx: Prisma.TransactionClient) => {
+    await tx.user.update({
+      where: { id: userId },
+      data: { apartmentId: null },
+    });
+  };
+
+  /**
+   * 다수 유저의 아파트 참조 일괄 해제
+   */
+  unlinkApartmentFromUsers = async (userIds: string[], tx: Prisma.TransactionClient) => {
+    await tx.user.updateMany({
+      where: { id: { in: userIds } },
+      data: { apartmentId: null },
+    });
+  };
 }

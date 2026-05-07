@@ -151,7 +151,7 @@ model Board {
   type BoardType
 
   apartmentId String
-  apartment   Apartment @relation(fields: [apartmentId], references: [id])
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
   complaints Complaint[]
   polls      Poll[]
@@ -170,7 +170,7 @@ model Complaint {
   isPublic Boolean @default(false)
 
   boardId String
-  board   Board  @relation(fields: [boardId], references: [id])
+  board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
 
   authorId String
   author   User   @relation("UserComplaints", fields: [authorId], references: [id])
@@ -208,7 +208,7 @@ model Poll {
   endDate            DateTime
 
   boardId String
-  board   Board  @relation(fields: [boardId], references: [id])
+  board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
 
   authorId String
   author   User   @relation("UserPolls", fields: [authorId], references: [id])
@@ -364,7 +364,7 @@ model Notice {
   commentsCount Int            @default(0)
 
   boardId String
-  board   Board  @relation(fields: [boardId], references: [id])
+  board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
 
   authorId String
   author   User   @relation("UserNotices", fields: [authorId], references: [id])
