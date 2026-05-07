@@ -270,11 +270,7 @@ export class AuthService {
    * @param status - 변경할 상태 (APPROVED/REJECTED)
    */
   updateResidentStatus = async (residentId: string, status: JoinStatus) => {
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [{ id: residentId }, { residentId: residentId }],
-      },
-    });
+    const user = await this.authRepo.findResidentUserById(residentId);
 
     if (!user) throw new NotFoundError("해당 사용자를 찾을 수 없습니다.");
     if (user.role !== "USER") {
@@ -371,16 +367,11 @@ export class AuthService {
 
     await prisma.$transaction(async (tx) => {
       // 유저의 아파트 참조를 먼저 해제하여 FK 제약조건 회피
-      await tx.user.update({
-        where: { id: adminId },
-        data: { apartmentId: null },
-      });
+      await this.authRepo.unlinkApartmentFromUser(adminId, tx);
 
-      // FK 제약 조건 오류를 방지하기 위해 아파트에 종속된 게시판(Board) 등 먼저 삭제
-      await tx.board.deleteMany({ where: { apartmentId } });
+      // FK 제약 조건 오류를 방지하기 위해 아파트에 종속된 데이터(Poll, Notice, Complaint, Board)와 아파트 삭제
+      await this.apartRepo.deleteApartmentWithAssociations(apartmentId, tx);
 
-      // 안전하게 아파트 직접 삭제
-      await tx.apartment.delete({ where: { id: apartmentId } });
       await this.authRepo.deleteUser(adminId, tx);
     });
   };
@@ -400,16 +391,10 @@ export class AuthService {
     await prisma.$transaction(async (tx) => {
       if (apartmentIds.length > 0) {
         // 유저의 아파트 참조를 해제하여 아파트 삭제 시 FK 제약조건 오류 방지
-        await tx.user.updateMany({
-          where: { id: { in: adminIds } },
-          data: { apartmentId: null },
-        });
+        await this.authRepo.unlinkApartmentFromUsers(adminIds, tx);
 
-        // FK 제약 조건 오류를 방지하기 위해 관련 게시판(Board) 먼저 일괄 삭제
-        await tx.board.deleteMany({ where: { apartmentId: { in: apartmentIds } } });
-
-        // 아파트 일괄 삭제
-        await tx.apartment.deleteMany({ where: { id: { in: apartmentIds } } });
+        // FK 제약 조건 오류를 방지하기 위해 관련 하위 데이터 및 아파트 일괄 삭제
+        await this.apartRepo.deleteApartmentsWithAssociations(apartmentIds, tx);
       }
       await this.authRepo.adminClean(adminIds, tx);
     });
