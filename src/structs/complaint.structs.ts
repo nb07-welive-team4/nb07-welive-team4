@@ -1,6 +1,6 @@
 import { object, string, boolean, enums, optional } from 'superstruct';
 
-const complaintStatusValues = ['PENDING', 'IN_PROGRESS', 'COMPLETED'] as const;
+const complaintStatusValues = ['PENDING', 'IN_PROGRESS', 'RESOLVED'] as const;
 
 export const CreateComplaintStruct = object({
   title: string(),

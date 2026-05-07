@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import prisma from "../lib/prisma";
 import { getSkip } from "../utils/pagination.util";
-import type { ApartmentPublicQuery, ApartmentAdminQuery } from "../types/apartment.types";
+import type { ApartmentPublicQuery, ApartmentAdminQuery, ApartmentStatus } from "../types/apartment.types";
 import type { CreateApartDto } from "../types/apart.type";
 
 //아파트 목록 조회
@@ -133,5 +133,39 @@ export class ApartRepo {
     await tx.apartment.deleteMany({
       where: { id: { in: ids } },
     });
+  };
+
+  // super-admin이 admin 승인 시 아파트 상태도 함께 업데이트
+  updateApartmentStatus = async (id: string, status: ApartmentStatus, tx?: Prisma.TransactionClient) => {
+    const client = tx || prisma;
+    await client.apartment.update({
+      where: { id },
+      data: { apartmentStatus: status },
+    });
+  };
+
+  // 일괄 승인 시 아파트 상태 일괄 업데이트
+  bulkUpdateApartmentStatus = async (ids: string[], status: ApartmentStatus, tx?: Prisma.TransactionClient) => {
+    const client = tx || prisma;
+    await client.apartment.updateMany({
+      where: { id: { in: ids } },
+      data: { apartmentStatus: status },
+    });
+  };
+
+  /**
+   * 아파트와 종속된 데이터(Board, Poll, Notice, Complaint)를 함께 삭제
+   */
+  deleteApartmentWithAssociations = async (apartmentId: string, tx: Prisma.TransactionClient) => {
+    // Apartment 삭제
+    await tx.apartment.delete({ where: { id: apartmentId } });
+  };
+
+  /**
+   * 다수의 아파트와 종속된 데이터를 일괄 삭제
+   */
+  deleteApartmentsWithAssociations = async (apartmentIds: string[], tx: Prisma.TransactionClient) => {
+    // Apartment 일괄 삭제
+    await tx.apartment.deleteMany({ where: { id: { in: apartmentIds } } });
   };
 }

@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import prisma from "../lib/prisma";
 import { CreateResidentDTO } from "../structs/resident.struct";
+import { CreateResidentDto } from "../types/resident.type";
 
 export class ResidentsRepo {
   findByNameAndContact = async (name: string, contact: string, tx?: Prisma.TransactionClient) => {
@@ -21,7 +22,7 @@ export class ResidentsRepo {
   };
 
   createResident = async (
-    data: CreateResidentDTO,
+    data: CreateResidentDto,
     apartmentId: string,
     isRegistered: boolean,
     tx?: Prisma.TransactionClient,

@@ -18,10 +18,7 @@ export function initNotificationRealtime(pub: IORedis, sub: IORedis): void {
 }
 
 export function emitNotificationToLocalClient(userId: string, notification: NotificationDto) {
-  emitToUser(userId, NOTIFICATION_SSE_EVENT, {
-    type: NOTIFICATION_SSE_EVENT,
-    data: [notification],
-  });
+  emitToUser(userId, NOTIFICATION_SSE_EVENT, [notification]);
 }
 
 export async function publishNotificationCreated(userId: string, notification: NotificationDto) {
@@ -57,9 +54,6 @@ export async function subscribeNotificationChannel() {
   _redisSub.on('message', (channel, payload) => {
     if (channel !== NOTIFICATION_CREATED_CHANNEL) return;
     const message = JSON.parse(payload) as NotificationRealtimeMessage;
-    emitToUser(message.userId, NOTIFICATION_SSE_EVENT, {
-      type: NOTIFICATION_SSE_EVENT,
-      data: [message.notification],
-    });
+    emitToUser(message.userId, NOTIFICATION_SSE_EVENT, [message.notification]);
   });
 }

@@ -36,7 +36,7 @@ export async function createNotifiacationRecord(input: CreateNotificationInput) 
           noticeId: input.noticeId ?? null,
           pollId: input.pollId ?? null,
         },
-        status: 'PENDING',
+        status: "PENDING",
       },
     });
 
@@ -44,8 +44,13 @@ export async function createNotifiacationRecord(input: CreateNotificationInput) 
   });
 }
 
-export async function findNotificationByDedupeKey(userId: string, dedupeKey: string): Promise<Awaited<ReturnType<typeof prisma.notification.findUnique>>>;
-export async function findNotificationByDedupeKey(dedupeKey: string): Promise<Awaited<ReturnType<typeof prisma.notification.findFirst>>>;
+export async function findNotificationByDedupeKey(
+  userId: string,
+  dedupeKey: string,
+): Promise<Awaited<ReturnType<typeof prisma.notification.findUnique>>>;
+export async function findNotificationByDedupeKey(
+  dedupeKey: string,
+): Promise<Awaited<ReturnType<typeof prisma.notification.findFirst>>>;
 export async function findNotificationByDedupeKey(userIdOrDedupeKey: string, dedupeKey?: string) {
   if (dedupeKey !== undefined) {
     return prisma.notification.findUnique({
@@ -57,11 +62,10 @@ export async function findNotificationByDedupeKey(userIdOrDedupeKey: string, ded
   });
 }
 
-
 export async function findUnreadNotificationsByUserId(userId: string) {
   return prisma.notification.findMany({
     where: { userId, isChecked: false },
-    orderBy: { notifiedAt : 'desc' },
+    orderBy: { notifiedAt: "desc" },
   });
 }
 
@@ -105,7 +109,7 @@ export async function claimPendingOutboxesForProcessing(
 
     await tx.notificationOutbox.updateMany({
       where: { id: { in: rows.map((r) => r.id) } },
-      data: { status: 'PROCESSING' },
+      data: { status: "PROCESSING" },
     });
 
     return rows;
@@ -119,18 +123,18 @@ export async function findPendingNotificationOutboxes(limit: number = 50) {
     where: {
       OR: [
         {
-          status: { in: ['PENDING', 'FAILED'] },
+          status: { in: ["PENDING", "FAILED"] },
           retryCount: { lt: 3 },
           availableAt: { lte: now },
         },
         {
-          status: 'PROCESSING',
+          status: "PROCESSING",
           retryCount: { lt: 3 },
           updatedAt: { lte: staleThreshold },
         },
       ],
     },
-    orderBy: { createdAt: 'asc' },
+    orderBy: { createdAt: "asc" },
     take: limit,
   });
 }
@@ -145,18 +149,18 @@ export async function claimNotificationOutboxForProcessing(id: string): Promise<
       id,
       OR: [
         {
-          status: { in: ['PENDING', 'FAILED'] },
+          status: { in: ["PENDING", "FAILED"] },
           retryCount: { lt: 3 },
           availableAt: { lte: now },
         },
         {
-          status: 'PROCESSING',
+          status: "PROCESSING",
           retryCount: { lt: 3 },
           updatedAt: { lte: staleThreshold },
         },
       ],
     },
-    data: { status: 'PROCESSING' },
+    data: { status: "PROCESSING" },
   });
   return result.count === 1;
 }
@@ -164,14 +168,14 @@ export async function claimNotificationOutboxForProcessing(id: string): Promise<
 export async function markNotificationOutboxProcessing(id: string) {
   return prisma.notificationOutbox.update({
     where: { id },
-    data: { status: 'PROCESSING' },
+    data: { status: "PROCESSING" },
   });
 }
 
 export async function markNotificationOutboxProcessed(id: string) {
   return prisma.notificationOutbox.update({
     where: { id },
-    data: { status: 'PROCESSED', processedAt: new Date() },
+    data: { status: "PROCESSED", processedAt: new Date() },
   });
 }
 
@@ -179,7 +183,7 @@ export async function markNotificationOutboxFailed(id: string, reason: string) {
   return prisma.notificationOutbox.update({
     where: { id },
     data: {
-      status: 'FAILED',
+      status: "FAILED",
       failedAt: new Date(),
       failedReason: reason,
       retryCount: { increment: 1 },
@@ -190,7 +194,7 @@ export async function markNotificationOutboxFailed(id: string, reason: string) {
 
 export async function updateNotificationDeliveryStatus(
   notificationId: string,
-  status: 'SENT' | 'FAILED',
+  status: "SENT" | "FAILED",
   meta: { sentAt?: Date; failedAt?: Date; failedReason?: string },
 ) {
   return prisma.notification.update({
@@ -198,4 +202,3 @@ export async function updateNotificationDeliveryStatus(
     data: { deliveryStatus: status, ...meta },
   });
 }
-

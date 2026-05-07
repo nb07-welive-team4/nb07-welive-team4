@@ -33,6 +33,7 @@ const superAdminPayload = {
 const adminPayload = {
   username: "event_admin",
   password: "password123!",
+  passwordConfirm: "password123!",
   name: "관리자",
   contact: "01077770001",
   email: "event_admin@test.com",
@@ -168,15 +169,12 @@ describe("Event 도메인 통합 테스트", () => {
   // ────────────────────────────────────────────
   describe("PUT /api/event — 이벤트 생성/업데이트", () => {
     it("관리자가 공지사항 기반 이벤트를 생성해야 한다", async () => {
-      const res = await request(app)
-        .put("/api/event")
-        .set("Cookie", adminCookie)
-        .query({
-          boardType: "NOTICE",
-          boardId: noticeId,
-          startDate: "2025-06-13T00:00:00.000Z",
-          endDate: "2025-06-15T23:59:59.999Z",
-        });
+      const res = await request(app).put("/api/event").set("Cookie", adminCookie).query({
+        boardType: "NOTICE",
+        boardId: noticeId,
+        startDate: "2025-06-13T00:00:00.000Z",
+        endDate: "2025-06-15T23:59:59.999Z",
+      });
 
       expect(res.status).toBe(204);
 
@@ -190,15 +188,12 @@ describe("Event 도메인 통합 테스트", () => {
     });
 
     it("같은 boardId로 다시 PUT하면 업데이트해야 한다", async () => {
-      const res = await request(app)
-        .put("/api/event")
-        .set("Cookie", adminCookie)
-        .query({
-          boardType: "NOTICE",
-          boardId: noticeId,
-          startDate: "2025-06-14T00:00:00.000Z",
-          endDate: "2025-06-16T23:59:59.999Z",
-        });
+      const res = await request(app).put("/api/event").set("Cookie", adminCookie).query({
+        boardType: "NOTICE",
+        boardId: noticeId,
+        startDate: "2025-06-14T00:00:00.000Z",
+        endDate: "2025-06-16T23:59:59.999Z",
+      });
 
       expect(res.status).toBe(204);
 
@@ -211,56 +206,45 @@ describe("Event 도메인 통합 테스트", () => {
     });
 
     it("존재하지 않는 boardId로 이벤트 생성 시 404를 반환해야 한다", async () => {
-      const res = await request(app)
-        .put("/api/event")
-        .set("Cookie", adminCookie)
-        .query({
-          boardType: "NOTICE",
-          boardId: "non-existent-id",
-          startDate: "2025-06-13T00:00:00.000Z",
-          endDate: "2025-06-15T23:59:59.999Z",
-        });
+      const res = await request(app).put("/api/event").set("Cookie", adminCookie).query({
+        boardType: "NOTICE",
+        boardId: "non-existent-id",
+        startDate: "2025-06-13T00:00:00.000Z",
+        endDate: "2025-06-15T23:59:59.999Z",
+      });
 
       expect(res.status).toBe(404);
     });
 
     it("유효하지 않은 boardType이면 400을 반환해야 한다", async () => {
-      const res = await request(app)
-        .put("/api/event")
-        .set("Cookie", adminCookie)
-        .query({
-          boardType: "INVALID",
-          boardId: noticeId,
-          startDate: "2025-06-13T00:00:00.000Z",
-          endDate: "2025-06-15T23:59:59.999Z",
-        });
+      const res = await request(app).put("/api/event").set("Cookie", adminCookie).query({
+        boardType: "INVALID",
+        boardId: noticeId,
+        startDate: "2025-06-13T00:00:00.000Z",
+        endDate: "2025-06-15T23:59:59.999Z",
+      });
 
       expect(res.status).toBe(400);
     });
 
     it("입주민이 이벤트 생성 시도하면 403을 반환해야 한다", async () => {
-      const res = await request(app)
-        .put("/api/event")
-        .set("Cookie", userCookie)
-        .query({
-          boardType: "NOTICE",
-          boardId: noticeId,
-          startDate: "2025-06-13T00:00:00.000Z",
-          endDate: "2025-06-15T23:59:59.999Z",
-        });
+      const res = await request(app).put("/api/event").set("Cookie", userCookie).query({
+        boardType: "NOTICE",
+        boardId: noticeId,
+        startDate: "2025-06-13T00:00:00.000Z",
+        endDate: "2025-06-15T23:59:59.999Z",
+      });
 
       expect(res.status).toBe(403);
     });
 
     it("인증 토큰 없이 이벤트 생성 시 401을 반환해야 한다", async () => {
-      const res = await request(app)
-        .put("/api/event")
-        .query({
-          boardType: "NOTICE",
-          boardId: noticeId,
-          startDate: "2025-06-13T00:00:00.000Z",
-          endDate: "2025-06-15T23:59:59.999Z",
-        });
+      const res = await request(app).put("/api/event").query({
+        boardType: "NOTICE",
+        boardId: noticeId,
+        startDate: "2025-06-13T00:00:00.000Z",
+        endDate: "2025-06-15T23:59:59.999Z",
+      });
 
       expect(res.status).toBe(401);
     });
@@ -310,18 +294,13 @@ describe("Event 도메인 통합 테스트", () => {
     });
 
     it("apartmentId 없이 조회 시 400을 반환해야 한다", async () => {
-      const res = await request(app)
-        .get("/api/event")
-        .set("Cookie", adminCookie)
-        .query({ year: 2025, month: 6 });
+      const res = await request(app).get("/api/event").set("Cookie", adminCookie).query({ year: 2025, month: 6 });
 
       expect(res.status).toBe(400);
     });
 
     it("인증 토큰 없이 조회 시 401을 반환해야 한다", async () => {
-      const res = await request(app)
-        .get("/api/event")
-        .query({ apartmentId, year: 2025, month: 6 });
+      const res = await request(app).get("/api/event").query({ apartmentId, year: 2025, month: 6 });
 
       expect(res.status).toBe(401);
     });
@@ -332,26 +311,20 @@ describe("Event 도메인 통합 테스트", () => {
   // ────────────────────────────────────────────
   describe("DELETE /api/event/:eventId — 이벤트 삭제", () => {
     it("관리자가 이벤트를 삭제해야 한다", async () => {
-      const res = await request(app)
-        .delete(`/api/event/${createdEventId}`)
-        .set("Cookie", adminCookie);
+      const res = await request(app).delete(`/api/event/${createdEventId}`).set("Cookie", adminCookie);
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe("이벤트가 삭제되었습니다.");
     });
 
     it("이미 삭제된 이벤트 삭제 시 404를 반환해야 한다", async () => {
-      const res = await request(app)
-        .delete(`/api/event/${createdEventId}`)
-        .set("Cookie", adminCookie);
+      const res = await request(app).delete(`/api/event/${createdEventId}`).set("Cookie", adminCookie);
 
       expect(res.status).toBe(404);
     });
 
     it("존재하지 않는 이벤트 삭제 시 404를 반환해야 한다", async () => {
-      const res = await request(app)
-        .delete("/api/event/non-existent-id")
-        .set("Cookie", adminCookie);
+      const res = await request(app).delete("/api/event/non-existent-id").set("Cookie", adminCookie);
 
       expect(res.status).toBe(404);
     });
@@ -371,9 +344,7 @@ describe("Event 도메인 통합 테스트", () => {
         },
       });
 
-      const res = await request(app)
-        .delete(`/api/event/${event.id}`)
-        .set("Cookie", userCookie);
+      const res = await request(app).delete(`/api/event/${event.id}`).set("Cookie", userCookie);
 
       expect(res.status).toBe(403);
     });

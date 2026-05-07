@@ -19,7 +19,7 @@ export class ResidentsController {
     const apartmentId = req.user.apartmentId;
 
     if (!apartmentId) {
-      return new ForbiddenError("아파트 정보가 없는 사용자입니다.");
+      throw new ForbiddenError("아파트 정보가 없는 사용자입니다.");
     }
 
     const resident = await this.residentsService.createResident(req.body, apartmentId);
