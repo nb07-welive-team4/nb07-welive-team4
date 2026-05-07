@@ -5,7 +5,12 @@ on:
     branches:
       - develop
       - main
+<<<<<<< HEAD
       - candidate
+=======
+      - release-candidate
+
+>>>>>>> 342b87577b74c9c3da462ccc35fb628ae9af140f
 jobs:
   build:
     runs-on: ubuntu-latest

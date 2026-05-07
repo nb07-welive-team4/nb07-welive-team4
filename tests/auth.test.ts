@@ -29,6 +29,7 @@ const payload = {
 
 const baseAdminPayload = {
   password: "password123!",
+  passwordConfirm: "password123!",
   name: "관리자",
   role: "ADMIN" as const,
   description: "테스트용 아파트 관리자입니다.",
@@ -199,7 +200,7 @@ describe("Auth 도메인 통합 테스트", () => {
   });
 
   describe("PATCH /api/auth/admins/:adminId/status", () => {
-    it("super-admin은 admin의 가입을 승인할 수 있어야 한다.", async () => {
+    it("super-admin은 admin의 가입을 승인할 수 있고 아파트 상태도 APPROVED로 변경되어야 한다.", async () => {
       const targetId = adminIds[0];
       const res = await request(app)
         .patch(`/api/auth/admins/${targetId}/status`)
@@ -210,13 +211,15 @@ describe("Auth 도메인 통합 테스트", () => {
 
       const updatedUser = await prisma.user.findUnique({
         where: { id: targetId! },
+        include: { managedApartment: true },
       });
       expect(updatedUser?.joinStatus).toBe("APPROVED");
+      expect(updatedUser?.managedApartment?.apartmentStatus).toBe("APPROVED");
     });
   });
 
   describe("PATCH /api/auth/admins/status", () => {
-    it("super-admin은 PENDING 상태인 어드민을 전부 가입 승인할 수 있어야 한다.", async () => {
+    it("super-admin은 PENDING 상태인 어드민을 전부 가입 승인할 수 있고 해당 아파트들도 APPROVED로 변경되어야 한다.", async () => {
       const pendingCountBefore = await prisma.user.count({
         where: { role: "ADMIN", joinStatus: "PENDING" },
       });
@@ -231,16 +234,36 @@ describe("Auth 도메인 통합 테스트", () => {
 
       const approvedAdmins = await prisma.user.findMany({
         where: { role: "ADMIN" },
+        include: { managedApartment: true },
       });
 
       approvedAdmins.forEach((admin) => {
         expect(admin.joinStatus).toBe("APPROVED");
+        if (admin.managedApartment) {
+          expect(admin.managedApartment.apartmentStatus).toBe("APPROVED");
+        }
       });
     });
   });
 
   describe("Data Cleanup - REJECTED 데이터 삭제", () => {
     it("SUPER_ADMIN은 거절된(REJECTED) 모든 어드민과 아파트를 일괄 삭제할 수 있다", async () => {
+      // 테스트를 위해 거절될 어드민 하나를 추가로 생성
+      const rejectAdminPayload = {
+        ...baseAdminPayload,
+        username: "reject_admin",
+        email: "reject@test.com",
+        contact: "01099998888",
+        apartmentName: "거절 아파트",
+      };
+
+      const rejectRes = await request(app).post("/api/auth/signup/admin").send(rejectAdminPayload);
+
+      await request(app)
+        .patch(`/api/auth/admins/${rejectRes.body.id}/status`)
+        .set("Cookie", superAdminCookie)
+        .send({ status: "REJECTED" });
+
       // 1. 거절된 어드민 셋업 (가입 승인 테스트 이후 status를 REJECTED로 변경)
       // 2. adminClean API 호출 (슈퍼어드민 쿠키 필요)
       const res = await request(app).post("/api/auth/cleanup").set("Cookie", superAdminCookie);
@@ -321,6 +344,7 @@ describe("Auth 도메인 통합 테스트", () => {
             contact: `010000000${i}0`,
             apartmentDong: `10${i}`,
             apartmentHo: `${i}`,
+            apartmentName: `그린아파트 1단지`, // 1번 관리자의 아파트(이름 변경되지 않음)로 통일
           });
 
         expect(res.status).toBe(201);

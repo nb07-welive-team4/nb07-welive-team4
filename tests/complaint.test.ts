@@ -33,6 +33,7 @@ const superAdminPayload = {
 const adminPayload = {
   username: "complaint_admin",
   password: "password123!",
+  passwordConfirm: "password123!",
   name: "관리자",
   contact: "01088880001",
   email: "complaint_admin@test.com",
@@ -171,15 +172,12 @@ describe("Complaint 도메인 통합 테스트", () => {
   // ────────────────────────────────────────────
   describe("POST /api/complaints — 민원 등록", () => {
     it("입주민이 민원을 정상적으로 등록해야 한다", async () => {
-      const res = await request(app)
-        .post("/api/complaints")
-        .set("Cookie", userCookie)
-        .send({
-          title: "층간소음 민원",
-          content: "위층에서 너무 시끄럽습니다.",
-          isPublic: true,
-          boardId,
-        });
+      const res = await request(app).post("/api/complaints").set("Cookie", userCookie).send({
+        title: "층간소음 민원",
+        content: "위층에서 너무 시끄럽습니다.",
+        isPublic: true,
+        boardId,
+      });
 
       expect(res.status).toBe(201);
       expect(res.body.complaint).toMatchObject({
@@ -223,9 +221,7 @@ describe("Complaint 도메인 통합 테스트", () => {
   // ────────────────────────────────────────────
   describe("GET /api/complaints — 민원 목록 조회", () => {
     it("관리자는 전체 민원 목록을 조회해야 한다", async () => {
-      const res = await request(app)
-        .get("/api/complaints")
-        .set("Cookie", adminCookie);
+      const res = await request(app).get("/api/complaints").set("Cookie", adminCookie);
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty("complaints");
@@ -240,9 +236,7 @@ describe("Complaint 도메인 통합 테스트", () => {
         .set("Cookie", user2Cookie)
         .send({ title: "비공개 민원", content: "비공개입니다.", isPublic: false, boardId });
 
-      const res = await request(app)
-        .get("/api/complaints")
-        .set("Cookie", userCookie);
+      const res = await request(app).get("/api/complaints").set("Cookie", userCookie);
 
       expect(res.status).toBe(200);
       // 비공개 민원이 다른 입주민에게 보이지 않아야 함
@@ -263,9 +257,7 @@ describe("Complaint 도메인 통합 테스트", () => {
   // ────────────────────────────────────────────
   describe("GET /api/complaints/:complaintId — 민원 상세 조회", () => {
     it("공개 민원을 정상적으로 조회해야 한다", async () => {
-      const res = await request(app)
-        .get(`/api/complaints/${createdComplaintId}`)
-        .set("Cookie", userCookie);
+      const res = await request(app).get(`/api/complaints/${createdComplaintId}`).set("Cookie", userCookie);
 
       expect(res.status).toBe(200);
       expect(res.body.complaint).toMatchObject({
@@ -275,12 +267,8 @@ describe("Complaint 도메인 통합 테스트", () => {
     });
 
     it("조회 시 viewsCount가 증가해야 한다", async () => {
-      const res1 = await request(app)
-        .get(`/api/complaints/${createdComplaintId}`)
-        .set("Cookie", userCookie);
-      const res2 = await request(app)
-        .get(`/api/complaints/${createdComplaintId}`)
-        .set("Cookie", userCookie);
+      const res1 = await request(app).get(`/api/complaints/${createdComplaintId}`).set("Cookie", userCookie);
+      const res2 = await request(app).get(`/api/complaints/${createdComplaintId}`).set("Cookie", userCookie);
 
       expect(res2.body.complaint.viewsCount).toBeGreaterThan(res1.body.complaint.viewsCount);
     });
@@ -294,9 +282,7 @@ describe("Complaint 도메인 통합 테스트", () => {
 
       const privateComplaintId = createRes.body.complaint.id;
 
-      const res = await request(app)
-        .get(`/api/complaints/${privateComplaintId}`)
-        .set("Cookie", user2Cookie);
+      const res = await request(app).get(`/api/complaints/${privateComplaintId}`).set("Cookie", user2Cookie);
 
       expect(res.status).toBe(403);
     });
@@ -309,17 +295,13 @@ describe("Complaint 도메인 통합 테스트", () => {
 
       const privateComplaintId = createRes.body.complaint.id;
 
-      const res = await request(app)
-        .get(`/api/complaints/${privateComplaintId}`)
-        .set("Cookie", adminCookie);
+      const res = await request(app).get(`/api/complaints/${privateComplaintId}`).set("Cookie", adminCookie);
 
       expect(res.status).toBe(200);
     });
 
     it("존재하지 않는 민원 조회 시 404를 반환해야 한다", async () => {
-      const res = await request(app)
-        .get("/api/complaints/non-existent-id")
-        .set("Cookie", userCookie);
+      const res = await request(app).get("/api/complaints/non-existent-id").set("Cookie", userCookie);
 
       expect(res.status).toBe(404);
     });
@@ -393,11 +375,11 @@ describe("Complaint 도메인 통합 테스트", () => {
       expect(res.status).toBe(400);
     });
 
-    it("관리자가 민원 상태를 COMPLETED로 변경해야 한다", async () => {
+    it("관리자가 민원 상태를 RESOLVED로 변경해야 한다", async () => {
       const res = await request(app)
         .patch(`/api/complaints/${createdComplaintId}/status`)
         .set("Cookie", adminCookie)
-        .send({ status: "COMPLETED" });
+        .send({ status: "RESOLVED" });
 
       expect(res.status).toBe(200);
     });
@@ -445,41 +427,32 @@ describe("Complaint 도메인 통합 테스트", () => {
     });
 
     it("본인이 작성한 PENDING 상태 민원을 삭제해야 한다", async () => {
-      const res = await request(app)
-        .delete(`/api/complaints/${deletableComplaintId}`)
-        .set("Cookie", userCookie);
+      const res = await request(app).delete(`/api/complaints/${deletableComplaintId}`).set("Cookie", userCookie);
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe("정상적으로 삭제 처리되었습니다.");
     });
 
     it("다른 입주민의 민원을 삭제하면 403을 반환해야 한다", async () => {
-      const res = await request(app)
-        .delete(`/api/complaints/${deletableComplaintId}`)
-        .set("Cookie", user2Cookie);
+      const res = await request(app).delete(`/api/complaints/${deletableComplaintId}`).set("Cookie", user2Cookie);
 
       expect(res.status).toBe(403);
     });
 
     it("관리자는 다른 사람의 민원도 삭제할 수 있어야 한다", async () => {
-      const res = await request(app)
-        .delete(`/api/complaints/${deletableComplaintId}`)
-        .set("Cookie", adminCookie);
+      const res = await request(app).delete(`/api/complaints/${deletableComplaintId}`).set("Cookie", adminCookie);
 
       expect(res.status).toBe(200);
     });
 
     it("존재하지 않는 민원 삭제 시 404를 반환해야 한다", async () => {
-      const res = await request(app)
-        .delete("/api/complaints/non-existent-id")
-        .set("Cookie", userCookie);
+      const res = await request(app).delete("/api/complaints/non-existent-id").set("Cookie", userCookie);
 
       expect(res.status).toBe(404);
     });
 
     it("인증 토큰 없이 삭제 시 401을 반환해야 한다", async () => {
-      const res = await request(app)
-        .delete(`/api/complaints/${deletableComplaintId}`);
+      const res = await request(app).delete(`/api/complaints/${deletableComplaintId}`);
 
       expect(res.status).toBe(401);
     });

@@ -42,7 +42,15 @@ const formatNoticeDetail = (notice: any): NoticeDetail => ({
   boardName: notice.board?.name ?? "",
   startDate: notice.startDate,
   endDate: notice.endDate,
-  comments: [],
+  comments: (notice.comments ?? []).map((c: any) => ({
+    id: c.id,
+    userId: c.authorId,
+    content: c.content,
+    createdAt: c.createdAt,
+    updatedAt: c.updatedAt,
+    writerName: c.author?.name ?? '',
+    board: { id: c.boardId, boardType: c.boardType },
+  })),
 });
 
 // 공지사항 목록 조회
