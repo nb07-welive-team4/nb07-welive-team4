@@ -113,7 +113,7 @@ export class AuthController {
     res.clearCookie("accessToken", { path: "/" });
     res.clearCookie("refreshToken", { path: "/" });
 
-    res.status(204).end();
+    res.status(200).json({ message: "성공적으로 로그아웃 되었습니다." });
   };
 
   /**
