@@ -168,7 +168,12 @@ export const authDocs = {
       tags: ["Auth"],
       summary: "로그아웃",
       security: [{ bearerAuth: [] }],
-      responses: { 204: { description: "로그아웃 성공 및 쿠키 삭제" } },
+      responses: {
+        200: {
+          description: "로그아웃 성공 및 쿠키 삭제",
+          content: { "application/json": { schema: messageSchema } },
+        },
+      },
     },
   },
   "/api/auth/cleanup": {
