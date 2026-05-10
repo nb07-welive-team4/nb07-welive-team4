@@ -188,6 +188,9 @@ describe("Comment 도메인 통합 테스트", () => {
   });
 
   afterAll(async () => {
+    await prisma.comment.deleteMany({
+      where: { author: { username: { startsWith: "comment_" } } },
+    });
     await prisma.$disconnect();
     await pool.end();
   });
