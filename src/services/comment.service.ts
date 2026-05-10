@@ -34,6 +34,15 @@ const createComment = async (
   authorId: string,
   body: CreateCommentBody,
 ): Promise<{ comment: CommentResponse }> => {
+  // boardId가 실제 엔티티를 가리키는지 검증
+  if (body.boardType === "NOTICE") {
+    const notice = await noticeRepository.findNoticeById(body.boardId);
+    if (!notice) throw new NotFoundError("공지사항을 찾을 수 없습니다.");
+  } else if (body.boardType === "COMPLAINT") {
+    const complaint = await complaintRepository.findComplaintById(body.boardId);
+    if (!complaint) throw new NotFoundError("민원을 찾을 수 없습니다.");
+  }
+
   const comment = await commentRepository.createComment(authorId, body);
 
   try {

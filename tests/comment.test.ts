@@ -85,6 +85,7 @@ describe("Comment 도메인 통합 테스트", () => {
   let userCookie: string[];
   let user2Cookie: string[];
   let boardId: string;
+  let complaintId: string;
   let createdCommentId: string;
 
   beforeAll(async () => {
@@ -174,6 +175,16 @@ describe("Comment 도메인 통합 테스트", () => {
     const complaintBoard = apartment?.boards.find((b) => b.type === "COMPLAINT");
     if (!complaintBoard) throw new Error("COMPLAINT 게시판 없음");
     boardId = complaintBoard.id;
+
+    // 댓글 테스트용 민원 생성
+    const complaintRes = await request(app).post("/api/complaints").set("Cookie", userCookie).send({
+      title: "댓글 테스트용 민원",
+      content: "댓글 테스트를 위한 민원입니다.",
+      isPublic: true,
+      boardId,
+    });
+    if (complaintRes.status !== 201) throw new Error("민원 생성 실패");
+    complaintId = complaintRes.body.id;
   });
 
   afterAll(async () => {
@@ -189,7 +200,7 @@ describe("Comment 도메인 통합 테스트", () => {
       const res = await request(app).post("/api/comments").set("Cookie", userCookie).send({
         content: "테스트 댓글입니다.",
         boardType: "COMPLAINT",
-        boardId,
+        boardId: complaintId,
       });
 
       expect(res.status).toBe(201);
@@ -199,7 +210,7 @@ describe("Comment 도메인 통합 테스트", () => {
         writerName: userPayload.name,
         content: "테스트 댓글입니다.",
         board: {
-          id: boardId,
+          id: complaintId,
           boardType: "COMPLAINT",
         },
       });
@@ -211,7 +222,7 @@ describe("Comment 도메인 통합 테스트", () => {
       const res = await request(app).post("/api/comments").set("Cookie", adminCookie).send({
         content: "관리자 댓글입니다.",
         boardType: "COMPLAINT",
-        boardId,
+        boardId: complaintId,
       });
 
       expect(res.status).toBe(201);
@@ -222,7 +233,7 @@ describe("Comment 도메인 통합 테스트", () => {
       const res = await request(app).post("/api/comments").send({
         content: "인증 없는 댓글",
         boardType: "COMPLAINT",
-        boardId,
+        boardId: complaintId,
       });
 
       expect(res.status).toBe(401);
@@ -231,7 +242,7 @@ describe("Comment 도메인 통합 테스트", () => {
     it("content가 없으면 400을 반환해야 한다", async () => {
       const res = await request(app).post("/api/comments").set("Cookie", userCookie).send({
         boardType: "COMPLAINT",
-        boardId,
+        boardId: complaintId,
       });
 
       expect(res.status).toBe(400);
@@ -240,7 +251,7 @@ describe("Comment 도메인 통합 테스트", () => {
     it("boardType이 없으면 400을 반환해야 한다", async () => {
       const res = await request(app).post("/api/comments").set("Cookie", userCookie).send({
         content: "boardType 없는 댓글",
-        boardId,
+        boardId: complaintId,
       });
 
       expect(res.status).toBe(400);
@@ -250,7 +261,7 @@ describe("Comment 도메인 통합 테스트", () => {
       const res = await request(app).post("/api/comments").set("Cookie", userCookie).send({
         content: "잘못된 boardType",
         boardType: "INVALID",
-        boardId,
+        boardId: complaintId,
       });
 
       expect(res.status).toBe(400);
@@ -271,7 +282,7 @@ describe("Comment 도메인 통합 테스트", () => {
         id: createdCommentId,
         content: "수정된 댓글입니다.",
         board: {
-          id: boardId,
+          id: complaintId,
           boardType: "COMPLAINT",
         },
       });
@@ -297,7 +308,7 @@ describe("Comment 도메인 통합 테스트", () => {
       const res = await request(app).patch(`/api/comments/${createdCommentId}`).send({
         content: "인증 없는 수정",
         boardType: "COMPLAINT",
-        boardId,
+        boardId: complaintId,
       });
 
       expect(res.status).toBe(401);
@@ -319,7 +330,7 @@ describe("Comment 도메인 통합 테스트", () => {
       const createRes = await request(app).post("/api/comments").set("Cookie", userCookie).send({
         content: "관리자가 삭제할 댓글",
         boardType: "COMPLAINT",
-        boardId,
+        boardId: complaintId,
       });
       const targetCommentId = createRes.body.comment.id;
 
