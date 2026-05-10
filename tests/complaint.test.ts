@@ -180,13 +180,13 @@ describe("Complaint 도메인 통합 테스트", () => {
       });
 
       expect(res.status).toBe(201);
-      expect(res.body.complaint).toMatchObject({
+      expect(res.body).toMatchObject({
         title: "층간소음 민원",
         content: "위층에서 너무 시끄럽습니다.",
         isPublic: true,
       });
 
-      createdComplaintId = res.body.complaint.id;
+      createdComplaintId = res.body.id;
     });
 
     it("인증 토큰 없이 민원 등록 시 401을 반환해야 한다", async () => {
@@ -260,7 +260,7 @@ describe("Complaint 도메인 통합 테스트", () => {
       const res = await request(app).get(`/api/complaints/${createdComplaintId}`).set("Cookie", userCookie);
 
       expect(res.status).toBe(200);
-      expect(res.body.complaint).toMatchObject({
+      expect(res.body).toMatchObject({
         complaintId: createdComplaintId,
         title: "층간소음 민원",
       });
@@ -270,7 +270,7 @@ describe("Complaint 도메인 통합 테스트", () => {
       const res1 = await request(app).get(`/api/complaints/${createdComplaintId}`).set("Cookie", userCookie);
       const res2 = await request(app).get(`/api/complaints/${createdComplaintId}`).set("Cookie", userCookie);
 
-      expect(res2.body.complaint.viewsCount).toBeGreaterThan(res1.body.complaint.viewsCount);
+      expect(res2.body.viewsCount).toBeGreaterThan(res1.body.viewsCount);
     });
 
     it("비공개 민원을 다른 입주민이 조회하면 403을 반환해야 한다", async () => {
@@ -280,7 +280,7 @@ describe("Complaint 도메인 통합 테스트", () => {
         .set("Cookie", userCookie)
         .send({ title: "비공개", content: "비공개 민원", isPublic: false, boardId });
 
-      const privateComplaintId = createRes.body.complaint.id;
+      const privateComplaintId = createRes.body.id;
 
       const res = await request(app).get(`/api/complaints/${privateComplaintId}`).set("Cookie", user2Cookie);
 
@@ -293,7 +293,7 @@ describe("Complaint 도메인 통합 테스트", () => {
         .set("Cookie", userCookie)
         .send({ title: "비공개2", content: "비공개 민원2", isPublic: false, boardId });
 
-      const privateComplaintId = createRes.body.complaint.id;
+      const privateComplaintId = createRes.body.id;
 
       const res = await request(app).get(`/api/complaints/${privateComplaintId}`).set("Cookie", adminCookie);
 
@@ -318,7 +318,7 @@ describe("Complaint 도메인 통합 테스트", () => {
         .send({ title: "수정된 제목", content: "수정된 내용", isPublic: false });
 
       expect(res.status).toBe(200);
-      expect(res.body.complaint).toMatchObject({
+      expect(res.body).toMatchObject({
         title: "수정된 제목",
         content: "수정된 내용",
         isPublic: false,
@@ -423,7 +423,7 @@ describe("Complaint 도메인 통합 테스트", () => {
         .post("/api/complaints")
         .set("Cookie", userCookie)
         .send({ title: "삭제할 민원", content: "삭제 테스트", isPublic: true, boardId });
-      deletableComplaintId = res.body.complaint.id;
+      deletableComplaintId = res.body.id;
     });
 
     it("본인이 작성한 PENDING 상태 민원을 삭제해야 한다", async () => {
