@@ -110,3 +110,14 @@ export const incrementViewsCount = async (noticeId: string) => {
     data: { viewsCount: { increment: 1 } },
   });
 };
+
+// 댓글 수 업데이트
+export const updateCommentsCount = async (noticeId: string) => {
+  const count = await prisma.comment.count({
+    where: { boardId: noticeId, boardType: 'NOTICE' },
+  });
+  return prisma.notice.update({
+    where: { id: noticeId },
+    data: { commentsCount: count },
+  });
+};

@@ -1,10 +1,12 @@
 import { commentRepository } from "../repositories/comment.repository.js";
+import * as noticeRepository from "../repositories/notice.repository.js";
+import * as complaintRepository from "../repositories/complaint.repository.js";
 import {
   CreateCommentBody,
   UpdateCommentBody,
   CommentResponse,
 } from "../types/comment.types.js";
-import { NotFoundError, ForbiddenError, BadRequestError } from "../errors/errors.js";
+import { NotFoundError, ForbiddenError } from "../errors/errors.js";
 import { Prisma } from "@prisma/client";
 import type { UserRole } from "../types/auth.type.js";
 
@@ -33,6 +35,17 @@ const createComment = async (
   body: CreateCommentBody,
 ): Promise<{ comment: CommentResponse }> => {
   const comment = await commentRepository.createComment(authorId, body);
+
+  try {
+    if (body.boardType === "NOTICE") {
+      await noticeRepository.updateCommentsCount(body.boardId);
+    } else if (body.boardType === "COMPLAINT") {
+      await complaintRepository.updateCommentsCount(body.boardId);
+    }
+  } catch (err) {
+    console.error("[Comment] Failed to update commentsCount", err);
+  }
+
   return { comment: formatComment(comment) };
 };
 
@@ -70,6 +83,16 @@ const deleteComment = async (
     throw new ForbiddenError("댓글을 삭제할 권한이 없습니다.");
 
   await commentRepository.deleteComment(commentId);
+
+  try {
+    if (comment.boardType === "NOTICE") {
+      await noticeRepository.updateCommentsCount(comment.boardId);
+    } else if (comment.boardType === "COMPLAINT") {
+      await complaintRepository.updateCommentsCount(comment.boardId);
+    }
+  } catch (err) {
+    console.error("[Comment] Failed to update commentsCount after delete", err);
+  }
 };
 
 export const commentService = {

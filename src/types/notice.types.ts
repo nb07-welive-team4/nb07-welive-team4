@@ -3,7 +3,7 @@ export interface CreateNoticeBody {
   title: string;
   content: string;
   boardId: string;
-  isPinned: boolean;
+  isPinned?: boolean;
   startDate?: string;
   endDate?: string;
 }

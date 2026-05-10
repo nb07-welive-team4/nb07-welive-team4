@@ -1,4 +1,4 @@
-import { object, string, boolean, optional, enums, defaulted } from "superstruct";
+import { object, string, boolean, optional, enums } from "superstruct";
 
 const noticeCategoryValues = [
   "MAINTENANCE",
@@ -14,7 +14,7 @@ export const CreateNoticeStruct = object({
   title: string(),
   content: string(),
   boardId: string(),
-  isPinned: defaulted(boolean(), false),
+  isPinned: optional(boolean()),
   startDate: optional(string()),
   endDate: optional(string()),
 });
