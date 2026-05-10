@@ -78,7 +78,7 @@ export async function findNotificationTargetUserIdsByApartmentId({
   const users = await prisma.user.findMany({
     where: {
       isActive: true,
-      joinStatus: 'APPROVED',
+      joinStatus: "APPROVED",
       resident: {
         apartmentId,
         isRegistered: true,
