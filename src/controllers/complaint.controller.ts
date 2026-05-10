@@ -56,7 +56,7 @@ export const createComplaint = async (req: Request, res: Response, next: NextFun
 
     const complaint = await complaintService.createComplaint(authorId, req.body);
 
-    res.status(201).json({ complaint });
+    res.status(201).json(complaint);
   } catch (err) {
     next(err);
   }
@@ -71,7 +71,7 @@ export const getComplaintById = async (req: Request, res: Response, next: NextFu
 
     const complaint = await complaintService.getComplaintById(complaintId, requestUserId, isAdmin);
 
-    res.status(200).json({ complaint });
+    res.status(200).json(complaint);
   } catch (err) {
     next(err);
   }
@@ -87,7 +87,7 @@ export const updateComplaint = async (req: Request, res: Response, next: NextFun
 
     const complaint = await complaintService.updateComplaint(complaintId, requestUserId, req.body);
 
-    res.status(200).json({ complaint });
+    res.status(200).json(complaint);
   } catch (err) {
     next(err);
   }
