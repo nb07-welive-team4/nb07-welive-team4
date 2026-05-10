@@ -37,6 +37,7 @@ describe("Resident 도메인 전체 API 통합 테스트", () => {
   beforeAll(async () => {
     await prisma.$transaction([
       prisma.refreshToken.deleteMany(),
+      prisma.comment.deleteMany(),
       prisma.pollOption.deleteMany(),
       prisma.poll.deleteMany(),
       prisma.notice.deleteMany(),
