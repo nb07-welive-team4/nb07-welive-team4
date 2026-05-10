@@ -32,11 +32,6 @@ const createComment = async (
   authorId: string,
   body: CreateCommentBody,
 ): Promise<{ comment: CommentResponse }> => {
-  const board = await commentRepository.findBoardById(body.boardId);
-  if (!board) throw new NotFoundError("게시판을 찾을 수 없습니다.");
-  if (board.type !== body.boardType)
-    throw new BadRequestError("boardType이 실제 게시판 유형과 일치하지 않습니다.");
-
   const comment = await commentRepository.createComment(authorId, body);
   return { comment: formatComment(comment) };
 };
