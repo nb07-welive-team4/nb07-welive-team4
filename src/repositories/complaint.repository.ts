@@ -142,7 +142,7 @@ export const updateCommentsCount = async (complaintId: string) => {
   const count = await prisma.comment.count({
     where: { boardId: complaintId, boardType: 'COMPLAINT' },
   });
-  return prisma.complaint.update({
+  return prisma.complaint.updateMany({
     where: { id: complaintId },
     data: { commentsCount: count },
   });
