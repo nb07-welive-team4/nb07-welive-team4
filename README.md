@@ -10,7 +10,7 @@
 
 | 구분 | 링크 |
 |------|------|
-| 서비스 | [welive-front.vercel.app](https://welive-front.vercel.app) |
+| 서비스 | [(https://www.nb07weliveteam4.cloud](https://www.nb07weliveteam4.cloud) |
 | API Swagger | [nb-project-welive-be.vercel.app/api](https://nb-project-welive-be.vercel.app/api) |
 | 프로젝트 문서 (Notion) | [프로젝트 계획서 & 개발 리포트](https://www.notion.so/WELIVE-35d9eb10fd748095a335e517076bf414) |
 | 팀 안내 문서 | [위리브 안내](https://codeit.notion.site/1f46fd228e8d80cdbc7af27b082d118d) |
