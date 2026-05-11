@@ -1,10 +1,12 @@
 import { commentRepository } from "../repositories/comment.repository.js";
+import * as noticeRepository from "../repositories/notice.repository.js";
+import * as complaintRepository from "../repositories/complaint.repository.js";
 import {
   CreateCommentBody,
   UpdateCommentBody,
   CommentResponse,
 } from "../types/comment.types.js";
-import { NotFoundError, ForbiddenError, BadRequestError } from "../errors/errors.js";
+import { NotFoundError, ForbiddenError } from "../errors/errors.js";
 import { Prisma } from "@prisma/client";
 import type { UserRole } from "../types/auth.type.js";
 
@@ -32,12 +34,27 @@ const createComment = async (
   authorId: string,
   body: CreateCommentBody,
 ): Promise<{ comment: CommentResponse }> => {
-  const board = await commentRepository.findBoardById(body.boardId);
-  if (!board) throw new NotFoundError("게시판을 찾을 수 없습니다.");
-  if (board.type !== body.boardType)
-    throw new BadRequestError("boardType이 실제 게시판 유형과 일치하지 않습니다.");
+  // boardId가 실제 엔티티를 가리키는지 검증
+  if (body.boardType === "NOTICE") {
+    const notice = await noticeRepository.findNoticeById(body.boardId);
+    if (!notice) throw new NotFoundError("공지사항을 찾을 수 없습니다.");
+  } else if (body.boardType === "COMPLAINT") {
+    const complaint = await complaintRepository.findComplaintById(body.boardId);
+    if (!complaint) throw new NotFoundError("민원을 찾을 수 없습니다.");
+  }
 
   const comment = await commentRepository.createComment(authorId, body);
+
+  try {
+    if (body.boardType === "NOTICE") {
+      await noticeRepository.updateCommentsCount(body.boardId);
+    } else if (body.boardType === "COMPLAINT") {
+      await complaintRepository.updateCommentsCount(body.boardId);
+    }
+  } catch (err) {
+    console.error("[Comment] Failed to update commentsCount", err);
+  }
+
   return { comment: formatComment(comment) };
 };
 
@@ -75,6 +92,16 @@ const deleteComment = async (
     throw new ForbiddenError("댓글을 삭제할 권한이 없습니다.");
 
   await commentRepository.deleteComment(commentId);
+
+  try {
+    if (comment.boardType === "NOTICE") {
+      await noticeRepository.updateCommentsCount(comment.boardId);
+    } else if (comment.boardType === "COMPLAINT") {
+      await complaintRepository.updateCommentsCount(comment.boardId);
+    }
+  } catch (err) {
+    console.error("[Comment] Failed to update commentsCount after delete", err);
+  }
 };
 
 export const commentService = {

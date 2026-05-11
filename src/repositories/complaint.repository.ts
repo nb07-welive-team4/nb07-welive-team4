@@ -8,16 +8,22 @@ import { getSkip } from '../utils/pagination.util';
 
 // 민원 단건 조회
 export const findComplaintById = async (complaintId: string) => {
-  return prisma.complaint.findUnique({
+  const complaint = await prisma.complaint.findUnique({
     where: { id: complaintId },
     include: {
       author: { select: { id: true, name: true, apartmentDong: true, apartmentHo: true } },
-      comments: {
-        include: { author: { select: { id: true, name: true } } },
-        orderBy: { createdAt: 'asc' },
-      },
     },
   });
+
+  if (!complaint) return null;
+
+  const comments = await prisma.comment.findMany({
+    where: { boardId: complaintId, boardType: 'COMPLAINT' },
+    include: { author: { select: { id: true, name: true } } },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  return { ...complaint, comments };
 };
 
 // 민원 목록 조회
@@ -136,7 +142,7 @@ export const updateCommentsCount = async (complaintId: string) => {
   const count = await prisma.comment.count({
     where: { boardId: complaintId, boardType: 'COMPLAINT' },
   });
-  return prisma.complaint.update({
+  return prisma.complaint.updateMany({
     where: { id: complaintId },
     data: { commentsCount: count },
   });

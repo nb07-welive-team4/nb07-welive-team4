@@ -157,8 +157,6 @@ model Board {
   polls      Poll[]
   notices    Notice[]
 
-  comments Comment[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -378,7 +376,6 @@ model Comment {
   content   String
   boardId   String
   boardType BoardType
-  board     Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
 
   authorId String
   author   User   @relation("UserComments", fields: [authorId], references: [id])

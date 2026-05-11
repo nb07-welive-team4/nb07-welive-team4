@@ -14,7 +14,7 @@ export const CreateNoticeStruct = object({
   title: string(),
   content: string(),
   boardId: string(),
-  isPinned: boolean(),
+  isPinned: optional(boolean()),
   startDate: optional(string()),
   endDate: optional(string()),
 });
