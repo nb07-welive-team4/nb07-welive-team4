@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { StructError } from "superstruct";
+import multer from "multer";
 import { CustomError } from "../errors/customError";
 
 export const errorHandler = (err: Error, req: Request, res: Response, _next: NextFunction) => {
@@ -16,6 +17,14 @@ export const errorHandler = (err: Error, req: Request, res: Response, _next: Nex
       success: false,
       message: `데이터 형식이 올바르지 않습니다. 필드: [${field}]`,
       errorDetail: err.message,
+    });
+  }
+
+  // Multer(파일 업로드) 관련 에러를 400 Bad Request로 처리
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({
+      success: false,
+      message: `파일 업로드 오류가 발생했습니다: ${err.message} (필드명을 확인해주세요)`,
     });
   }
 
