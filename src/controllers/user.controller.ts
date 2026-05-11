@@ -7,6 +7,11 @@ import {
   UnsupportedFileTypeError,
 } from "../services/s3.service";
 
+type ErrorWithStatusCode = Error & {
+  statusCode?: number;
+  status?: number;
+};
+
 export class UserController {
   private userService = new UserService();
 
@@ -32,8 +37,6 @@ export class UserController {
 
       return res.status(200).json(result);
     } catch (error) {
-      console.error("[ERROR] PATCH /api/users/me :", error);
-
       if (error instanceof multer.MulterError) {
         if (error.code === "LIMIT_FILE_SIZE") {
           return res.status(400).json({
@@ -75,6 +78,17 @@ export class UserController {
           message: error.message,
         });
       }
+
+      const customError = error as ErrorWithStatusCode;
+      const statusCode = customError.statusCode ?? customError.status;
+
+      if (statusCode && statusCode >= 400 && statusCode < 500) {
+        return res.status(statusCode).json({
+          message: customError.message,
+        });
+      }
+
+      console.error("[ERROR] PATCH /api/users/me :", error);
 
       return res.status(500).json({
         message: "프로필 수정 중 오류가 발생했습니다.",
