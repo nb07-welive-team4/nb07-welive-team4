@@ -1,6 +1,16 @@
 import { Request, Response } from "express";
+import multer from "multer";
 import { UpdateProfileDto, ValidatePassword } from "../structs/user.struct";
 import { UserService } from "../services/user.service";
+import {
+  FileSizeLimitError,
+  UnsupportedFileTypeError,
+} from "../services/s3.service";
+
+type ErrorWithStatusCode = Error & {
+  statusCode?: number;
+  status?: number;
+};
 
 export class UserController {
   private userService = new UserService();
@@ -11,11 +21,79 @@ export class UserController {
    * @param req - Request 객체 (body: UpdateProfileDto, file: Express.Multer.File)
    * @param res - Response 객체
    */
-  updateProfile = async (req: Request<{}, {}, UpdateProfileDto>, res: Response) => {
-    const userId = req.user.id;
-    const file = req.file;
-    const result = await this.userService.updateProfile(userId, req.body, file);
-    res.status(200).json(result);
+  updateProfile = async (
+    req: Request<{}, {}, UpdateProfileDto>,
+    res: Response,
+  ) => {
+    try {
+      const userId = req.user.id;
+      const file = req.file;
+
+      const result = await this.userService.updateProfile(
+        userId,
+        req.body,
+        file,
+      );
+
+      return res.status(200).json(result);
+    } catch (error) {
+      if (error instanceof multer.MulterError) {
+        if (error.code === "LIMIT_FILE_SIZE") {
+          return res.status(400).json({
+            message: "파일 크기는 10MB 이하만 업로드할 수 있습니다.",
+          });
+        }
+
+        return res.status(400).json({
+          message: error.message,
+        });
+      }
+
+      if (error instanceof UnsupportedFileTypeError) {
+        return res.status(400).json({
+          message: error.message,
+        });
+      }
+
+      if (error instanceof FileSizeLimitError) {
+        return res.status(400).json({
+          message: error.message,
+        });
+      }
+
+      if (
+        error instanceof Error &&
+        error.message.includes("지원하지 않는 파일 형식")
+      ) {
+        return res.status(400).json({
+          message: error.message,
+        });
+      }
+
+      if (
+        error instanceof Error &&
+        error.message.includes("파일 크기는 10MB 이하")
+      ) {
+        return res.status(400).json({
+          message: error.message,
+        });
+      }
+
+      const customError = error as ErrorWithStatusCode;
+      const statusCode = customError.statusCode ?? customError.status;
+
+      if (statusCode && statusCode >= 400 && statusCode < 500) {
+        return res.status(statusCode).json({
+          message: customError.message,
+        });
+      }
+
+      console.error("[ERROR] PATCH /api/users/me :", error);
+
+      return res.status(500).json({
+        message: "프로필 수정 중 오류가 발생했습니다.",
+      });
+    }
   };
 
   /**
@@ -24,9 +102,12 @@ export class UserController {
    * @param req - Request 객체 (body: ValidatePassword)
    * @param res - Response 객체
    */
-  changePassword = async (req: Request<{}, {}, ValidatePassword>, res: Response) => {
+  changePassword = async (
+    req: Request<{}, {}, ValidatePassword>,
+    res: Response,
+  ) => {
     const userId = req.user.id;
     const result = await this.userService.changePassword(userId, req.body);
-    res.status(200).json(result);
+    return res.status(200).json(result);
   };
 }
